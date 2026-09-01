@@ -1,7 +1,7 @@
 ---
 name: inject
 description: Inject a random seed into any creative task (visual design, prose, naming, code architecture, anything where variety beats the default) so the result does not regress to the mean. Use when the user runs /entropy:inject, asks for "something different", "surprise me", "not the usual", or wants several distinct takes on the same brief.
-argument-hint: "[task] | --seed <string> [task] | --current"
+argument-hint: "[task] | --seed <string> [task] | --current | --headless"
 ---
 
 # Entropy: inject
@@ -17,6 +17,7 @@ Based on String Seed of Thought (Sakana AI).
 - Empty: generate a new seed, derive a direction, show it, then stop and wait.
 - `<task>`: generate a new seed, derive a direction, show it, then do the task.
 - `--seed <string> [task]`: skip generation and use the given string. Everything else is the same.
+- `--headless`: may be combined with any of the above. Never ask questions. Where the skill would ask, decide and state the decision instead. Once given, it stays on for the rest of the session.
 - `--current`: do not generate. Read `.entropy/current.json` and re-state its seed and direction so the rest of the conversation follows it. Use this when the direction was set many turns ago or the context was compacted. If the file is missing, say so and stop.
 
 ## Procedure
@@ -47,7 +48,7 @@ Read the string closely. Look past the surface: repeated characters, runs of dig
 
 Commit to what the seed points at. Use judgment only to make the direction good, never to steer it back toward the default. If the seed points somewhere strange, go there and make it work.
 
-Write the direction as a short list: one line per axis, each stating the decision and the part of the seed that produced it.
+Write the direction as a short list: one line per axis, each stating the decision and the part of the seed that produced it. Before writing it down, check each axis against the user's standing rules (CLAUDE.md, active skills, the task's own constraints). Drop any axis that conflicts and say which one was dropped and why. Then add one line stating the scope: the deliverable the task named, which all later work inside it inherits. A task that names a whole (an app, a book, a brand) gives a wide scope. A task that names one piece (a commit message, a hero section) gives a narrow one.
 
 ### 4. Show seed and direction
 
@@ -60,10 +61,12 @@ Create `.entropy/` in the working directory if it does not exist. Then:
 Append one line to `.entropy/seeds.jsonl`:
 
 ```json
-{"ts":"<ISO 8601>","seed":"<seed>","task":"<task or empty>","direction":"<direction list as one string>"}
+{"ts":"<ISO 8601>","seed":"<seed>","task":"<task or empty>","scope":"<scope line>","direction":"<direction list as one string>"}
 ```
 
 Write `.entropy/current.json` with the same object, replacing whatever was there.
+
+If the working directory is a git repository and `.entropy/` is not yet ignored, ask with AskUserQuestion whether to add it to `.gitignore`. Under `--headless`, do not ask and do not change `.gitignore`.
 
 Use `jq -n` or a heredoc so quotes and newlines inside the direction are escaped correctly.
 
@@ -74,5 +77,8 @@ If a task was given, do it now under the direction. If not, stop and say: the di
 ## Rules
 
 - One seed at a time. A new inject replaces the old direction. The log keeps history.
+- The direction's scope is the deliverable named in the task. Work that is part of that deliverable inherits the direction. Work outside it is untouched unless the user says to apply the seed to it. A direction set with no task applies to everything until replaced. When it is unclear whether new work is inside the scope, ask with AskUserQuestion. If `--headless` was given, do not ask: say you are applying the direction and let the user object.
 - To branch from an earlier point, copy its seed from `.entropy/seeds.jsonl` and run `/entropy:inject --seed <string>` in a fresh conversation.
+- The user's standing rules win. The direction varies taste inside the box set by CLAUDE.md, the task's own constraints, accessibility, and correctness. It never overrides them.
+- When delegating work inside the scope to a subagent, paste the seed and direction from `.entropy/current.json` into its prompt. Subagents cannot see this conversation.
 - Never soften the direction later in the conversation without saying so. If the user asks for a change, apply it and keep the rest.
