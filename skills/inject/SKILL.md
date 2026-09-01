@@ -53,7 +53,13 @@ For each axis from step 2, write a numbered menu of 8 to 12 options, numbered fr
 - Include the plain default. It is one option among many, so it wins rarely.
 - Include the opposite of the default.
 - Include options from different eras, cultures, registers, and traditions. Include at least two you would never choose on your own.
-- Options on one axis must be far apart. Two shades of the same idea count as one option.
+- Options on one axis must be far apart. Two shades of the same idea count as one option. Far apart means a reader could tell from the result alone which option was picked.
+- Every option must be one that can be done well. Wide is not the same as bad. The menu spans the good work of many traditions, not the range from good to poor.
+
+Two axes are always on the list, whatever the domain, because they are where the model's own taste hides:
+
+- **Register**: the voice or attitude of the piece. The menu must span at least these, each of which has a tradition of excellent work: warm, dry and witty, exuberant, austere, lyrical, plainspoken and technical, conversational, formal editorial, grand or mythic, wry and understated. The quiet contemplative voice the model reaches for by itself is one of ten.
+- **Frame**: the scene, speaker, structural device, or reference tradition the piece is built on. For prose and copy: who is speaking, from where, in what form (a letter, a field note, a manifesto, a dialogue, an instruction, a story told from a distance). For visual design: the reference tradition (Swiss modernism, mid-century advertising, brutalism, scientific illustration, editorial magazine, arcade, folk print, corporate annual report, Bauhaus, contemporary product). The model's habitual frame, a domestic vignette in prose or cream editorial paper in design, is one option among many.
 
 Then turn the seed into numbers. Run:
 
