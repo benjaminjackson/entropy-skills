@@ -1,7 +1,7 @@
 ---
 name: inject
 description: Inject a random seed into any creative task (visual design, prose, naming, code architecture, anything where variety beats the default) so the result does not regress to the mean. Use when the user runs /entropy:inject, asks for "something different", "surprise me", "not the usual", or wants several distinct takes on the same brief.
-argument-hint: "[task] | --seed <string> [task] | --current | --headless"
+argument-hint: "[--headless] [--seed <string>] [task] | --current"
 ---
 
 # Entropy: inject
@@ -18,6 +18,8 @@ Based on String Seed of Thought (Sakana AI).
 - `<task>`: generate a new seed, derive a direction, show it, then do the task.
 - `--seed <string> [task]`: skip generation and use the given string. Everything else is the same.
 - `--headless`: may be combined with any of the above. Never ask questions. Where the skill would ask, decide and state the decision instead. Once given, it stays on for the rest of the session.
+
+Flags come first. Any text after the flags is the task. `--headless build a hero section` means: headless on, task is "build a hero section".
 - `--current`: do not generate. Read `.entropy/current.json` and re-state its seed and direction so the rest of the conversation follows it. Use this when the direction was set many turns ago or the context was compacted. If the file is missing, say so and stop.
 
 ## Procedure
@@ -72,7 +74,7 @@ Use `jq -n` or a heredoc so quotes and newlines inside the direction are escaped
 
 ### 6. Do the task, or wait
 
-If a task was given, do it now under the direction. If not, stop and say: the direction is set, say go, or run `/entropy:inject` again for a new seed.
+If a task was given, do it now, in this same reply, under the direction. Do not stop after showing the direction. If no task was given, stop and say: the direction is set, say go, or run `/entropy:inject` again for a new seed.
 
 ## Rules
 
