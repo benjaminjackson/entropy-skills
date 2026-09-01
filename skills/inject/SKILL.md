@@ -100,13 +100,14 @@ If a task was given, do it now, in this same reply, under the direction. Do not 
 
 For visual work the read-back is concrete, because a model reading its own CSS says yes to everything. Render the result and look at it with the Read tool. Take the first rung that works:
 
+0. A browser tool in this session with a screenshot action (the built-in Claude Browser or Claude in Chrome), if it can reach the page. It runs on the user's machine, so it cannot open a file that lives only in a cloud container.
 1. Headless Chrome or Chromium, if installed. macOS path: `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`. Linux: `google-chrome`, `chromium`, or `chromium-browser`.
    ```bash
    "$CHROME" --headless --disable-gpu --hide-scrollbars --window-size=1280,800 --screenshot=shot.png "file://$PWD/page.html"
    ```
-2. Playwright, if `npx --no-install playwright --version` answers. If no browser is downloaded yet, run `npx playwright install chromium` once; it may fail behind a proxy, and that is the end of this rung.
+2. Playwright, if `npx --no-install playwright --version` answers. The cloud container ships Chromium for it. Elsewhere, if no browser is downloaded yet, run `npx playwright install chromium` once; it may fail behind a proxy, and that is the end of this rung. The page must be given as a URL; a bare path is treated as a hostname.
    ```bash
-   npx playwright screenshot --viewport-size=1280,800 page.html shot.png
+   npx playwright screenshot --viewport-size=1280,800 "file://$PWD/page.html" shot.png
    ```
 3. No renderer. Say so in one line and read the code instead.
 
