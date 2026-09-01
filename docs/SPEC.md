@@ -53,6 +53,8 @@ The claim is: outputs vary more with the skill than without. The eval runs the s
 
 The eval runs on Opus by default, never Fable. A model argument accepts `opus`, `sonnet`, or `haiku` so the same suite can check whether the skill holds up on smaller models.
 
+The eval is a plain script, `evals/run.sh`, that loops `claude -p` for each arm and makes one judge call per arm over the whole set of outputs. Two reasons. First, `claude plugin eval` is early access at the time of writing and is absent from the public docs, so a regenerated plugin cannot depend on it. Second, its graders score one run at a time, and variety is a property of the set. The script runs both arms with `--bare` so the user's CLAUDE.md, hooks, and other plugins do not shape either arm. Prompts live in `evals/prompts/`, one file each, covering at least design, prose, and naming so the any-domain claim is tested.
+
 A second check: every direction line in a run's output names the part of the seed it came from. A direction with untraceable decisions is the model falling back on its defaults.
 
 ## Files
