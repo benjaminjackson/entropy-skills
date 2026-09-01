@@ -40,6 +40,28 @@ for file in "${PROMPTS[@]}"; do
 done
 wait
 
+render() { # dir -> writes dir/page.html and dir/shot.png when the output holds HTML and a browser exists; silent otherwise
+  local dir=$1 out="$1/output.md"
+  if grep -q '^```html' "$out"; then sed -n '/^```html/,/^```/p' "$out" | sed '1d;$d' > "$dir/page.html"
+  elif grep -qi '<style\|<section\|<div\|<!doctype' "$out"; then sed -n '/<!DOCTYPE\|<!doctype\|<html\|<style\|<section\|<div\|<header\|<main/,$p' "$out" > "$dir/page.html"
+  else return 0; fi
+  local chrome="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+  [ -x "$chrome" ] || chrome=$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)
+  if [ -n "$chrome" ]; then
+    local to; to=$(command -v timeout || command -v gtimeout || true)   # macOS lacks timeout without coreutils; Chrome normally exits in ~2s anyway
+    ${to:+$to 30} "$chrome" --headless --disable-gpu --hide-scrollbars --window-size=1280,800 --screenshot="$dir/shot.png" "file://$dir/page.html" >/dev/null 2>&1 || true
+  elif command -v npx >/dev/null; then
+    npx --no-install playwright screenshot --viewport-size=1280,800 "file://$dir/page.html" "$dir/shot.png" >/dev/null 2>&1 || true
+  fi
+}
+for file in "${PROMPTS[@]}"; do name=$(basename "$file" .md); for arm in with without; do for i in $(seq 1 "$RUNS"); do render "$OUT/$name/$arm/$i"; done; done; done
+
+shots_note() { # name arm -> instruction line listing screenshots, if any rendered
+  local name=$1 arm=$2 list=""
+  for i in $(seq 1 "$RUNS"); do [ -s "$OUT/$name/$arm/$i/shot.png" ] && list="$list $arm/$i/shot.png"; done
+  [ -n "$list" ] && echo "Screenshots of the rendered responses are at these paths, relative to the working directory; open each with the Read tool and judge from what you see, using the code only for what a screenshot cannot show:$list"
+}
+
 judge_set() { # prompt-file arm pass  -> writes judge-<pass>.json with responses shuffled
   local file=$1 arm=$2 pass=$3 name; name=$(basename "$file" .md)
   local task; task=$(cat "$file")
@@ -49,8 +71,9 @@ judge_set() { # prompt-file arm pass  -> writes judge-<pass>.json with responses
     echo; echo "$task"; echo
     echo "Ignore any preamble about seeds, menus, or creative direction; judge only the deliverable. Consider whichever axes fit the brief: palette, layout, typography, structure, voice, rhythm, sound, metaphor, tone, architecture."
     echo "Reply with JSON only: {\"score\": <1-10, 1 = near-identical, 10 = every response takes a clearly different approach>, \"shared\": \"<the strongest pattern most responses share, or 'none'>\", \"notes\": \"<one sentence>\"}"
-    local n=0; for i in $order; do n=$((n+1)); echo; echo "===== RESPONSE $n ====="; cat "$OUT/$name/$arm/$i/output.md"; done
-  } | claude -p --setting-sources "" --model "$JUDGE" --no-session-persistence > "$OUT/$name/$arm/judge-$pass.json" 2>/dev/null
+    shots_note "$name" "$arm"
+    local n=0; for i in $order; do n=$((n+1)); echo; echo "===== RESPONSE $n (file $arm/$i) ====="; cat "$OUT/$name/$arm/$i/output.md"; done
+  } | (cd "$OUT/$name" && claude -p --setting-sources "" --model "$JUDGE" --no-session-persistence --allowedTools Read) > "$OUT/$name/$arm/judge-$pass.json" 2>/dev/null
 }
 
 head_to_head() { # prompt-file pass judge-model -> writes h2h-<model>-<pass>.json; sets are labeled A/B in random order
@@ -67,9 +90,10 @@ head_to_head() { # prompt-file pass judge-model -> writes h2h-<model>-<pass>.jso
     for set in A B; do
       local arm; [ $set = A ] && arm=$first || arm=$second
       echo; echo "########## SET $set ##########"
-      for i in $(seq 1 "$RUNS"); do echo; echo "===== SET $set RESPONSE $i ====="; cat "$OUT/$name/$arm/$i/output.md"; done
+      shots_note "$name" "$arm"
+      for i in $(seq 1 "$RUNS"); do echo; echo "===== SET $set RESPONSE $i (file $arm/$i) ====="; cat "$OUT/$name/$arm/$i/output.md"; done
     done
-  } | claude -p --setting-sources "" --model "$jm" --no-session-persistence > "$OUT/$name/h2h-$jm-$pass.json" 2>/dev/null
+  } | (cd "$OUT/$name" && claude -p --setting-sources "" --model "$jm" --no-session-persistence --allowedTools Read) > "$OUT/$name/h2h-$jm-$pass.json" 2>/dev/null
 }
 
 for file in "${PROMPTS[@]}"; do

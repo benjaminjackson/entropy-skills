@@ -64,11 +64,13 @@ Result at version 0.1.0, Opus generating, ten runs, three passes:
 | prompt | with plugin | without | head-to-head wins, Opus judge | head-to-head wins, Sonnet judge |
 |---|---|---|---|---|
 | code | 6.0 | 2.0 | 3 of 3 | 3 of 3 |
-| design | 4.3 | 2.3 | 3 of 3 | 3 of 3 |
+| design | 8.0 | 2.0 | 3 of 3 | 3 of 3 |
 | naming | 7.7 | 2.0 | 3 of 3 | 3 of 3 |
 | prose | 5.7 | 2.0 | 3 of 3 | 3 of 3 |
 
-Every head-to-head was won at the maximum margin. Design is the weakest domain: the frame picks differ, but six or seven of ten hero sections still collapse into one specimen-sheet layout on bone paper. The read-back check catches drift in prose and not yet in HTML. Known limitation, shipped as is.
+Every head-to-head was won at the maximum margin. Design scored 4.3 before its own round of fixes: the frame picks differed, but six or seven of ten hero sections collapsed into one specimen-sheet layout on bone paper, because frame changes the costume and not the body, and because a model reading its own CSS confirms anything. Three changes took it to 8.0 with zero spread across passes: a mandatory layout-skeleton axis with named shapes, a read-back that renders the page with headless Chrome or Playwright and states ground color, skeleton, and type from the screenshot, and an eval judge that sees screenshots instead of CSS. The remaining shared pattern is a giant headline with one word in an accent color, and copy that refuses gamification.
+
+Rendering depends on the machine. A Mac with Chrome renders. The cloud container has Playwright but no browser and ImageMagick 6 only, so rendering there depends on whether `npx playwright install chromium` gets through the proxy. Where nothing renders, the read-back falls back to the code and says so.
 
 A second check: every direction line in a run's output shows the menu index and the arithmetic that chose it. A direction without the arithmetic is the model choosing for itself.
 

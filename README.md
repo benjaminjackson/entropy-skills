@@ -50,15 +50,15 @@ Yes, measured. Same brief, ten runs per arm on Opus, a judge scores each set for
 | prompt | with plugin | without | head-to-head wins |
 |---|---|---|---|
 | code architecture | 6.0 | 2.0 | 6 of 6 |
-| landing page hero | 4.3 | 2.3 | 6 of 6 |
+| landing page hero | 8.0 | 2.0 | 6 of 6 |
 | app name and tagline | 7.7 | 2.0 | 6 of 6 |
 | announcement paragraph | 5.7 | 2.0 | 6 of 6 |
 
-Run it yourself with `evals/run.sh`. It takes `--model opus|sonnet|haiku`, `--runs`, and `--passes`. Visual design is the weakest domain: the picks vary, the execution still leans toward one layout.
+Run it yourself with `evals/run.sh`. It takes `--model opus|sonnet|haiku`, `--runs`, and `--passes`. Design outputs are rendered with headless Chrome so the judge sees pages, not CSS.
 
 ## How it works
 
-The model does not read the string for inspiration. Every random string looks the same to a model, so that lands in the same place every time. Instead, for each decision that shapes the result, the model writes a menu of 8 to 12 options that span the good work of many traditions, including the plain default. The seed is hashed into numbers, and each number picks one option by modulo. The arithmetic is shown, so every choice is auditable. Two axes are always on the menu: the register of the piece and the frame or tradition it is built on, because those are where the model's own taste hides.
+The model does not read the string for inspiration. Every random string looks the same to a model, so that lands in the same place every time. Instead, for each decision that shapes the result, the model writes a menu of 8 to 12 options that span the good work of many traditions, including the plain default. The seed is hashed into numbers, and each number picks one option by modulo. The arithmetic is shown, so every choice is auditable. Two axes are always on the menu: the register of the piece and the frame or tradition it is built on, because those are where the model's own taste hides. Visual work adds a third, the layout skeleton, and after building the page the model renders it with headless Chrome if there is one and checks the screenshot against the picks.
 
 ## Record
 

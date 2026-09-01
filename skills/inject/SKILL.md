@@ -59,6 +59,7 @@ For each axis from step 2, write a numbered menu of 8 to 12 options, numbered fr
 Two axes are always on the list, whatever the domain, because they are where the model's own taste hides:
 
 - **Register**: the voice or attitude of the piece. The menu must span at least these, each of which has a tradition of excellent work: warm, dry and witty, exuberant, austere, lyrical, plainspoken and technical, conversational, formal editorial, grand or mythic, wry and understated. The quiet contemplative voice the model reaches for by itself is one of ten.
+- **Layout skeleton** (visual work only): the shape of the page or composition before any styling. Frame alone changes the costume and leaves the body; this axis rolls the body. Options must be named shapes: centered stack, asymmetric split, full-bleed image with type over it, single giant word, poster grid, editorial columns, diagonal or rotated block, stacked horizontal bands, sidebar and canvas, typographic wall, framed card on a patterned ground.
 - **Frame**: the scene, speaker, structural device, or reference tradition the piece is built on. For prose and copy: who is speaking, from where, in what form (a letter, a field note, a manifesto, a dialogue, an instruction, a story told from a distance). For visual design: the reference tradition (Swiss modernism, mid-century advertising, brutalism, scientific illustration, editorial magazine, arcade, folk print, corporate annual report, Bauhaus, contemporary product). The model's habitual frame, a domestic vignette in prose or cream editorial paper in design, is one option among many.
 
 Then turn the seed into numbers. Run:
@@ -95,7 +96,26 @@ Use `jq -n` or a heredoc so quotes and newlines inside the direction are escaped
 
 ### 6. Do the task, or wait
 
-If a task was given, do it now, in this same reply, under the direction. Do not stop after showing the direction. Before presenting the result, read it back against the direction, axis by axis, with the register pick first. A pick is random, but execution drifts back toward the habitual voice: the model picks conversational and writes lyrical. If the result reads as a different option than the one picked, rewrite it until it does not. Do not mention this check in the output. If no task was given, stop and say: the direction is set, say go, or run `/entropy:inject` again for a new seed.
+If a task was given, do it now, in this same reply, under the direction. Do not stop after showing the direction. Before presenting the result, read it back against the direction, axis by axis, with the register pick first. A pick is random, but execution drifts back toward the habitual voice: the model picks conversational and writes lyrical. If the result reads as a different option than the one picked, rewrite it until it does not. Do not mention this check in the output.
+
+For visual work the read-back is concrete, because a model reading its own CSS says yes to everything. Render the result and look at it with the Read tool. Take the first rung that works:
+
+1. Headless Chrome or Chromium, if installed. macOS path: `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`. Linux: `google-chrome`, `chromium`, or `chromium-browser`.
+   ```bash
+   "$CHROME" --headless --disable-gpu --hide-scrollbars --window-size=1280,800 --screenshot=shot.png "file://$PWD/page.html"
+   ```
+2. Playwright, if `npx --no-install playwright --version` answers. If no browser is downloaded yet, run `npx playwright install chromium` once; it may fail behind a proxy, and that is the end of this rung.
+   ```bash
+   npx playwright screenshot --viewport-size=1280,800 page.html shot.png
+   ```
+3. No renderer. Say so in one line and read the code instead.
+
+With a screenshot, ImageMagick gives the ground color without guessing, if present as `magick` (version 7) or `convert` (version 6):
+```bash
+magick shot.png -resize 1x1 -format '%[pixel:p{0,0}]' info:    # or: convert shot.png -resize 1x1 -format '%[pixel:p{0,0}]' info:
+```
+
+From the image, or from the code if nothing rendered, state three facts: the ground color, the layout skeleton, and the type family actually used. Compare each to its pick. Rewrite if any differ. A pixel font on a two-column bone-paper split is not an arcade cabinet. Delete `page.html` and `shot.png` afterward unless the deliverable is the file itself. If no task was given, stop and say: the direction is set, say go, or run `/entropy:inject` again for a new seed.
 
 ## Rules
 
