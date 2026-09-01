@@ -20,7 +20,7 @@ The plugin must work for any task where variety beats the default: visual design
 8. A direction ends with a scope line: the deliverable named in the task. Work inside that deliverable inherits the direction. Work outside it does not, unless the user says so. No task means the scope is everything.
 9. The user's standing rules win over the seed. Before the direction is written down, each axis is checked against CLAUDE.md, active skills, and the task's own constraints. Conflicting axes are dropped and named.
 10. When the model delegates work inside the scope, it pastes the seed and direction into the subagent's prompt.
-11. A hook prints a one-line reminder on every prompt while `current.json` exists, so the direction survives compaction. The reminder names the scope and tells the model to read the file. Text from the file is flattened and capped before it is echoed.
+11. A hook prints a one-line reminder on every prompt while `current.json` exists, so the direction survives compaction. The reminder tells the model to read the file. Nothing from the file is echoed, because the file may come from a cloned repository and its text is not trusted.
 12. When it is unclear whether new work is inside the scope, the model asks. Under `--headless` it applies the direction and says so.
 13. In a git repository where `.entropy/` is not ignored, the skill asks whether to add it to `.gitignore`. Under `--headless` it does not ask and does not touch the file.
 14. The direction is never quietly softened later in the conversation. If the user asks for a change, the change is applied and the rest of the direction is kept.
@@ -37,7 +37,7 @@ The plugin must work for any task where variety beats the default: visual design
 
 **Subagents get the direction pasted in.** They cannot see the conversation. Without this, delegated pieces silently revert to the default.
 
-**The reminder hook is one line and telegraph-terse.** It runs on every prompt, so it must cost almost nothing when active and print nothing when not. It names the scope so the model knows when reading the file matters.
+**The reminder hook is one line and telegraph-terse.** It runs on every prompt, so it must cost almost nothing when active and print nothing when not. It does not repeat the scope. Echoing file text into every prompt was flagged twice as a prompt injection path, so the model reads the file for the scope instead.
 
 **`--headless` sticks for the session.** It exists for scripts. Passing it on every call is the failure mode it prevents.
 
