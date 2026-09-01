@@ -57,7 +57,18 @@ The claim is: outputs vary more with the skill than without. The eval runs the s
 
 The eval runs on Opus by default, never Fable. A model argument accepts `opus`, `sonnet`, or `haiku` so the same suite can check whether the skill holds up on smaller models.
 
-The eval is a plain script, `evals/run.sh`, that loops `claude -p` for each arm and makes one judge call per arm over the whole set of outputs. Two reasons. First, `claude plugin eval` is early access at the time of writing and is absent from the public docs, so a regenerated plugin cannot depend on it. Second, its graders score one run at a time, and variety is a property of the set. The script runs both arms with `--setting-sources ""` so the user's hooks and other plugins do not shape either arm. `--bare` would also drop CLAUDE.md, but it requires an API key in the environment, which not every user has. Prompts live in `evals/prompts/`, one file each, covering at least design, prose, and naming so the any-domain claim is tested.
+The eval is a plain script, `evals/run.sh`, that loops `claude -p` for each arm, scores each arm's set of outputs three times with the responses shuffled, and puts the two sets head to head, blind and in random order, on two judge models. The ship gate: on every prompt, the plugin's mean beats the baseline by at least 2 points, and the plugin set wins every head-to-head on both judges. Ten runs per arm. Five runs was too few: two runs rolled the same frame by chance and moved a score by three points. Two reasons. First, `claude plugin eval` is early access at the time of writing and is absent from the public docs, so a regenerated plugin cannot depend on it. Second, its graders score one run at a time, and variety is a property of the set. The script runs both arms with `--setting-sources ""` so the user's hooks and other plugins do not shape either arm. `--bare` would also drop CLAUDE.md, but it requires an API key in the environment, which not every user has. Prompts live in `evals/prompts/`, one file each, covering design, prose, naming, and code so the any-domain claim is tested. Prompts do not name the product: a name like Tally pulled every design toward tally marks and ledgers in both arms.
+
+Result at version 0.1.0, Opus generating, ten runs, three passes:
+
+| prompt | with plugin | without | head-to-head wins, Opus judge | head-to-head wins, Sonnet judge |
+|---|---|---|---|---|
+| code | 6.0 | 2.0 | 3 of 3 | 3 of 3 |
+| design | 4.3 | 2.3 | 3 of 3 | 3 of 3 |
+| naming | 7.7 | 2.0 | 3 of 3 | 3 of 3 |
+| prose | 5.7 | 2.0 | 3 of 3 | 3 of 3 |
+
+Every head-to-head was won at the maximum margin. Design is the weakest domain: the frame picks differ, but six or seven of ten hero sections still collapse into one specimen-sheet layout on bone paper. The read-back check catches drift in prose and not yet in HTML. Known limitation, shipped as is.
 
 A second check: every direction line in a run's output shows the menu index and the arithmetic that chose it. A direction without the arithmetic is the model choosing for itself.
 

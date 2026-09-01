@@ -1,0 +1,1 @@
+Design the module layout for a small command-line tool that syncs a folder of plain-text notes to a remote server. List the modules, what each owns, and how data flows between them. Under 200 words. Output only the design.

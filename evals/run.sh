@@ -1,15 +1,18 @@
 #!/bin/bash
 # Runs each prompt N times with and without the plugin, then asks one judge per arm
 # how varied the set is. Prints a score table. Usage:
-#   evals/run.sh [--model opus|sonnet|haiku] [--runs N] [--judge-model M] [prompt-file ...]
+#   evals/run.sh [--model opus|sonnet|haiku] [--runs N] [--passes N] [--judge-model M] [--judge-model-2 M] [prompt-file ...]
+# Each arm is scored PASSES times with responses shuffled, and both arms go head to head, blind, on two judge models.
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-MODEL=opus; RUNS=5; JUDGE=opus; PROMPTS=()
+MODEL=opus; RUNS=5; PASSES=3; JUDGE=opus; JUDGE2=sonnet; PROMPTS=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --model) MODEL=$2; shift 2;;
     --runs) RUNS=$2; shift 2;;
     --judge-model) JUDGE=$2; shift 2;;
+    --judge-model-2) JUDGE2=$2; shift 2;;
+    --passes) PASSES=$2; shift 2;;
     *) PROMPTS+=("$1"); shift;;
   esac
 done
@@ -37,26 +40,71 @@ for file in "${PROMPTS[@]}"; do
 done
 wait
 
-judge() { # prompt-file arm
-  local file=$1 arm=$2 name; name=$(basename "$file" .md)
+judge_set() { # prompt-file arm pass  -> writes judge-<pass>.json with responses shuffled
+  local file=$1 arm=$2 pass=$3 name; name=$(basename "$file" .md)
   local task; task=$(cat "$file")
+  local order; order=$(python3 -c 'import random,sys; l=sys.argv[1:]; random.shuffle(l); print(" ".join(l))' $(seq 1 "$RUNS"))
   {
     echo "You are judging how varied a set of $RUNS independent responses to the same brief is. Brief:"
     echo; echo "$task"; echo
-    echo "Ignore any preamble about seeds or creative direction; judge only the deliverable. Consider whichever axes fit the brief: palette, layout, typography, structure, voice, rhythm, sound, metaphor, tone."
+    echo "Ignore any preamble about seeds, menus, or creative direction; judge only the deliverable. Consider whichever axes fit the brief: palette, layout, typography, structure, voice, rhythm, sound, metaphor, tone, architecture."
     echo "Reply with JSON only: {\"score\": <1-10, 1 = near-identical, 10 = every response takes a clearly different approach>, \"shared\": \"<the strongest pattern most responses share, or 'none'>\", \"notes\": \"<one sentence>\"}"
-    for i in $(seq 1 "$RUNS"); do echo; echo "===== RESPONSE $i ====="; cat "$OUT/$name/$arm/$i/output.md"; done
-  } | claude -p --setting-sources "" --model "$JUDGE" --no-session-persistence > "$OUT/$name/$arm/judge.json" 2>/dev/null
+    local n=0; for i in $order; do n=$((n+1)); echo; echo "===== RESPONSE $n ====="; cat "$OUT/$name/$arm/$i/output.md"; done
+  } | claude -p --setting-sources "" --model "$JUDGE" --no-session-persistence > "$OUT/$name/$arm/judge-$pass.json" 2>/dev/null
 }
-for file in "${PROMPTS[@]}"; do for arm in with without; do judge "$file" "$arm" & done; done
+
+head_to_head() { # prompt-file pass judge-model -> writes h2h-<model>-<pass>.json; sets are labeled A/B in random order
+  local file=$1 pass=$2 jm=$3 name; name=$(basename "$file" .md)
+  local task; task=$(cat "$file")
+  local first=with second=without
+  if [ $((RANDOM % 2)) -eq 1 ]; then first=without; second=with; fi
+  echo "{\"A\":\"$first\",\"B\":\"$second\"}" > "$OUT/$name/h2h-$jm-$pass.key"
+  {
+    echo "Two sets of $RUNS independent responses to the same brief. Brief:"
+    echo; echo "$task"; echo
+    echo "Ignore any preamble about seeds, menus, or creative direction; judge only the deliverables. Which set is more varied in approach, considering whichever axes fit the brief?"
+    echo "Reply with JSON only: {\"more_varied\": \"A\" or \"B\", \"margin\": <1-5, 1 = barely, 5 = no contest>, \"notes\": \"<one sentence>\"}"
+    for set in A B; do
+      local arm; [ $set = A ] && arm=$first || arm=$second
+      echo; echo "########## SET $set ##########"
+      for i in $(seq 1 "$RUNS"); do echo; echo "===== SET $set RESPONSE $i ====="; cat "$OUT/$name/$arm/$i/output.md"; done
+    done
+  } | claude -p --setting-sources "" --model "$jm" --no-session-persistence > "$OUT/$name/h2h-$jm-$pass.json" 2>/dev/null
+}
+
+for file in "${PROMPTS[@]}"; do
+  for pass in $(seq 1 "$PASSES"); do
+    for arm in with without; do judge_set "$file" "$arm" "$pass" & done
+    for jm in "$JUDGE" "$JUDGE2"; do head_to_head "$file" "$pass" "$jm" & done
+  done
+done
 wait
 
-printf '\n%-10s %-8s %-8s %s\n' prompt with without shared-pattern-with-plugin
+score() { sed -n 's/.*"score": *\([0-9]*\).*/\1/p' "$1" | head -1; }
+stats() { # files... -> "mean (min-max)"
+  python3 -c '
+import sys,re
+v=[]
+for f in sys.argv[1:]:
+    m=re.search(r"\"score\":\s*(\d+)", open(f).read())
+    if m: v.append(int(m.group(1)))
+print("%.1f (%d-%d)" % (sum(v)/len(v), min(v), max(v)) if v else "?")' "$@"
+}
+h2h_wins() { # name judge-model -> "wins/passes"
+  local name=$1 jm=$2 wins=0
+  for pass in $(seq 1 "$PASSES"); do
+    local pick arm
+    pick=$(sed -n 's/.*"more_varied": *"\([AB]\)".*/\1/p' "$OUT/$name/h2h-$jm-$pass.json" | head -1)
+    arm=$(jq -r ".$pick // empty" "$OUT/$name/h2h-$jm-$pass.key")
+    [ "$arm" = with ] && wins=$((wins+1))
+  done
+  echo "$wins/$PASSES"
+}
+
+printf '\n%-8s %-14s %-14s %-12s %-12s\n' prompt "with" "without" "h2h:$JUDGE" "h2h:$JUDGE2"
 for file in "${PROMPTS[@]}"; do
   name=$(basename "$file" .md)
-  w=$(sed -n 's/.*"score": *\([0-9]*\).*/\1/p' "$OUT/$name/with/judge.json" | head -1)
-  wo=$(sed -n 's/.*"score": *\([0-9]*\).*/\1/p' "$OUT/$name/without/judge.json" | head -1)
-  sh=$(sed -n 's/.*"shared": *"\([^"]*\)".*/\1/p' "$OUT/$name/with/judge.json" | head -1)
-  printf '%-10s %-8s %-8s %s\n' "$name" "${w:-?}" "${wo:-?}" "$sh"
+  printf '%-8s %-14s %-14s %-12s %-12s\n' "$name" "$(stats "$OUT/$name"/with/judge-*.json)" "$(stats "$OUT/$name"/without/judge-*.json)" "$(h2h_wins "$name" "$JUDGE")" "$(h2h_wins "$name" "$JUDGE2")"
 done
-echo; echo "details: $OUT"
+echo; echo "with = mean (min-max) over $PASSES shuffled judge passes; h2h = passes where the plugin set was judged more varied"
+echo "details: $OUT"
