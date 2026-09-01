@@ -111,9 +111,9 @@ For visual work the read-back is concrete, because a model reading its own CSS s
    ```
 3. No renderer. Say so in one line and read the code instead.
 
-With a screenshot, ImageMagick gives the ground color without guessing, if present as `magick` (version 7) or `convert` (version 6):
+With a screenshot, ImageMagick gives the ground color without guessing, if present as `magick` (version 7) or `convert` (version 6). Sample a corner, since averaging the frame lets the text tint the result:
 ```bash
-magick shot.png -resize 1x1 -format '%[pixel:p{0,0}]' info:    # or: convert shot.png -resize 1x1 -format '%[pixel:p{0,0}]' info:
+magick shot.png -format '%[pixel:p{0,0}]' info:    # or: convert shot.png -format '%[pixel:p{0,0}]' info:
 ```
 
 From the image, or from the code if nothing rendered, state three facts: the ground color, the layout skeleton, and the type family actually used. Compare each to its pick. Rewrite if any differ. A pixel font on a two-column bone-paper split is not an arcade cabinet. Delete `page.html` and `shot.png` afterward unless the deliverable is the file itself. If no task was given, stop and say: the direction is set, say go, or run `/entropy:inject` again for a new seed.
