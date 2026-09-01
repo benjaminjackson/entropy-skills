@@ -11,7 +11,7 @@ The plugin must work for any task where variety beats the default: visual design
 ## What must be true
 
 1. `/entropy:inject` gets its seed from `openssl rand -base64 48`. The model never invents, edits, or shortens it.
-2. The model reads the task, infers the domain, picks the three to six decisions that most shape the result in that domain, and derives each one from a pattern in the string. Every decision traces back to the string.
+2. The model reads the task, infers the domain, and picks the three to six decisions that most shape the result in that domain. For each one it writes a menu of 8 to 12 options that span the whole space, including the default and its opposite. The seed is hashed into numbers and each number, modulo the menu size, picks one option. The arithmetic is shown. Every decision traces back to the string through a pick the model could not steer.
 3. The model commits to where the seed points. Judgment makes the direction good. Judgment never steers it back toward the default.
 4. The seed and the derived direction are both shown in chat. The seed string never appears in the deliverable.
 5. Every inject appends one JSON line to `.entropy/seeds.jsonl` (timestamp, seed, task, scope, direction) and overwrites `.entropy/current.json` with the same object.
@@ -45,7 +45,7 @@ The plugin must work for any task where variety beats the default: visual design
 
 **Replay re-derives.** `--seed` runs the string through derivation again rather than loading the logged direction. This keeps the log a plain record and lets the same seed be read for a different task. The cost is that a replay may not reproduce the earlier direction exactly. Verbatim replay from the log is a possible later addition.
 
-**Derivation may regress to the mean too.** The string is random, but the model's reading of it may not be. It may always turn digit runs into counts and doubled letters into pairs. No fix yet. Watch `seeds.jsonl` after ten or more seeds and look for clustering before designing one.
+**Enumerate, then select. Never read the string for inspiration.** The first version asked the model to read the string for patterns and derive a direction from what it saw. The first eval showed that fails: five seeds gave five near-identical directions (hard consonant names, ledger metaphors, deadpan tone, bone paper with one red accent), because every base64 string looks the same to a model and its reading of it is not random. Scores were 4 versus 2 for design and 2 versus 2 for prose and naming. The fix follows Sakana's actual procedure: list the candidates first, then use the string as a number to choose among them. Randomness reaches the decision as selection, not interpretation. The menu is now the only place the model's taste can narrow the result, so the skill requires menus that include the default, its opposite, and options the model would not choose on its own.
 
 ## What the eval must show
 
@@ -55,7 +55,7 @@ The eval runs on Opus by default, never Fable. A model argument accepts `opus`, 
 
 The eval is a plain script, `evals/run.sh`, that loops `claude -p` for each arm and makes one judge call per arm over the whole set of outputs. Two reasons. First, `claude plugin eval` is early access at the time of writing and is absent from the public docs, so a regenerated plugin cannot depend on it. Second, its graders score one run at a time, and variety is a property of the set. The script runs both arms with `--setting-sources ""` so the user's hooks and other plugins do not shape either arm. `--bare` would also drop CLAUDE.md, but it requires an API key in the environment, which not every user has. Prompts live in `evals/prompts/`, one file each, covering at least design, prose, and naming so the any-domain claim is tested.
 
-A second check: every direction line in a run's output names the part of the seed it came from. A direction with untraceable decisions is the model falling back on its defaults.
+A second check: every direction line in a run's output shows the menu index and the arithmetic that chose it. A direction without the arithmetic is the model choosing for itself.
 
 ## Files
 

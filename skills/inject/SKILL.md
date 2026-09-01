@@ -44,13 +44,28 @@ The task comes from the arguments, or from the conversation if the arguments are
 - Code and architecture: module boundaries, naming scheme, data flow style, what is explicit versus implicit.
 - Anything else: pick the three to six decisions that most shape how the result feels.
 
-### 3. Derive the direction from the seed
+### 3. Enumerate options, then let the seed choose
 
-Read the string closely. Look past the surface: repeated characters, runs of digits, case patterns, letters that spell fragments, numbers that suggest ratios, proportions, counts, or hue angles. Map what you find onto the axes from step 2. Each decision must trace back to something in the string.
+Do not read the string for inspiration. Every random string looks alike to a model, so a reading lands in the same place every time. Instead, list the options first and let the seed pick.
 
-Commit to what the seed points at. Use judgment only to make the direction good, never to steer it back toward the default. If the seed points somewhere strange, go there and make it work.
+For each axis from step 2, write a numbered menu of 8 to 12 options, numbered from 0. The menu must span the whole space, not the neighborhood you would pick from yourself:
 
-Write the direction as a short list: one line per axis, each stating the decision and the part of the seed that produced it. Before writing it down, check each axis against the user's standing rules (CLAUDE.md, active skills, the task's own constraints). Drop any axis that conflicts and say which one was dropped and why. Then add one line stating the scope: the deliverable the task named, which all later work inside it inherits. A task that names a whole (an app, a book, a brand) gives a wide scope. A task that names one piece (a commit message, a hero section) gives a narrow one.
+- Include the plain default. It is one option among many, so it wins rarely.
+- Include the opposite of the default.
+- Include options from different eras, cultures, registers, and traditions. Include at least two you would never choose on your own.
+- Options on one axis must be far apart. Two shades of the same idea count as one option.
+
+Then turn the seed into numbers. Run:
+
+```bash
+printf '%s' "$SEED" | shasum -a 256 | cut -c1-24 | fold -w2 | while read h; do echo $((16#$h)); done
+```
+
+This prints twelve numbers from 0 to 255, one per line. Axis 1 uses the first number, axis 2 the second, and so on. The pick for an axis is that number modulo the size of its menu. Show the arithmetic for every axis, for example: `axis 3: 203 mod 9 = 5, option 5`. Do not adjust a pick after seeing it.
+
+Commit to what was picked. Use judgment only to make the combination good, never to move a pick back toward the default. If the picks clash, make the clash work.
+
+Write the direction as a short list: one line per axis, giving the option picked, its index, and the arithmetic. Before writing it down, check each axis against the user's standing rules (CLAUDE.md, active skills, the task's own constraints). Drop any axis that conflicts and say which one was dropped and why. Then add one line stating the scope: the deliverable the task named, which all later work inside it inherits. A task that names a whole (an app, a book, a brand) gives a wide scope. A task that names one piece (a commit message, a hero section) gives a narrow one.
 
 ### 4. Show seed and direction
 
