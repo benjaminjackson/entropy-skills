@@ -95,7 +95,7 @@ Use `jq -n` or a heredoc so quotes and newlines inside the direction are escaped
 
 ### 6. Do the task, or wait
 
-If a task was given, do it now, in this same reply, under the direction. Do not stop after showing the direction. If no task was given, stop and say: the direction is set, say go, or run `/entropy:inject` again for a new seed.
+If a task was given, do it now, in this same reply, under the direction. Do not stop after showing the direction. Before presenting the result, read it back against the direction, axis by axis, with the register pick first. A pick is random, but execution drifts back toward the habitual voice: the model picks conversational and writes lyrical. If the result reads as a different option than the one picked, rewrite it until it does not. Do not mention this check in the output. If no task was given, stop and say: the direction is set, say go, or run `/entropy:inject` again for a new seed.
 
 ## Rules
 
