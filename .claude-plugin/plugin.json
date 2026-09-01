@@ -1,0 +1,12 @@
+{
+  "name": "entropy",
+  "description": "Inject real randomness into creative work. Generates a random seed string outside the model and derives a creative direction from it, so each run lands somewhere different instead of on the default.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Benjamin Jackson",
+    "email": "ben@benjaminjackson.co"
+  },
+  "repository": "https://github.com/benjaminjackson/entropy-skills",
+  "license": "MIT",
+  "keywords": ["creativity", "design", "writing", "randomness", "seed"]
+}

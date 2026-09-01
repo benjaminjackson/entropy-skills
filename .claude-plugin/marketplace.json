@@ -1,0 +1,15 @@
+{
+  "name": "entropy-skills",
+  "owner": {
+    "name": "Benjamin Jackson",
+    "email": "ben@benjaminjackson.co"
+  },
+  "plugins": [
+    {
+      "name": "entropy",
+      "source": "./",
+      "description": "Inject real randomness into creative work via seed strings."
+    }
+  ],
+  "description": "Skills that inject real randomness into creative work."
+}
