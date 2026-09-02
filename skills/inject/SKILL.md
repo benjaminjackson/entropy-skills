@@ -48,13 +48,21 @@ The task comes from the arguments, or from the conversation if the arguments are
 
 Do not read the string for inspiration. Every random string looks alike to a model, so a reading lands in the same place every time. Instead, list the options first and let the seed pick.
 
-For each axis from step 2, write a numbered menu of 8 to 12 options, numbered from 0. The menu must span the whole space, not the neighborhood you would pick from yourself:
+For each axis from step 2, write a numbered menu of 8 to 12 options, numbered from 0. A menu written from habit is the model's taste with a die attached, so write each one in this order:
+
+1. Name the habit first. Before listing anything, write what you would do on this axis with no seed. That is option 0, and it gets exactly one slot.
+2. Name the goal of the axis. One sentence: what a reader should be able to tell from the result alone. If two options would read the same in the result, they are one option.
+3. Walk traditions, not adjectives. Fill the other slots by asking who did this well in a different era, place, or medium. Bauhaus is an option; bold is not.
+4. Check before rolling. Read the menu back: is the default in one slot, is there an option you would never pick, could you tell every pair apart in the result. Fix, then hash.
+
+The menu must span the whole space, not the neighborhood you would pick from yourself:
 
 - Include the plain default. It is one option among many, so it wins rarely.
 - Include the opposite of the default.
 - Include options from different eras, cultures, registers, and traditions. Include at least two you would never choose on your own.
 - Options on one axis must be far apart. Two shades of the same idea count as one option. Far apart means a reader could tell from the result alone which option was picked.
 - Every option must be one that can be done well. Wide is not the same as bad. The menu spans the good work of many traditions, not the range from good to poor.
+- One slot per habit. The model's own default takes one option on a menu, never several under different names. Cream, bone, linen, parchment, and unbleached paper are one ground, so a palette menu holds one warm-paper option, and the other nine grounds are somewhere else: white, black, a saturated field, grey, a cool tint, a pattern. The same rule for any axis: if two options would look alike in the result, they are one option.
 
 Some axes are always on the list, because they are where the model's own taste hides. Register and Frame for every domain; the visual ones whenever the work is visual:
 
@@ -64,6 +72,7 @@ Some axes are always on the list, because they are where the model's own taste h
 - **Headline treatment** (visual work only): how the main line of type is set. The model's own move, a giant flush-left headline with one phrase flipped to the accent color, is one option. Menu: one word in accent color, all one color and one weight, outlined or hollow, stacked one word per line, justified block, set small and surrounded by space, rotated or vertical, broken across an image or shape, mixed sizes within one line, set in a box or ribbon, underlined by hand, no headline at all with the copy carrying the page.
 - **Section rhythm** (visual work only): how the page is divided and paced. The model's default, equal sections at equal padding on a centered 1200px column, with a three or four figure stat strip, is one option. Menu: equal sections on a centered column, one element bleeding off the edge, overlapping blocks, a single unbroken surface with no sections, one wide and many narrow, a deliberate break in the grid, dense top and empty bottom, margins wider than the content, elements pinned to corners, a stat strip or figure row as the only division.
 - **Copy stance** (visual work and copy only): the attitude of the words toward the reader. The model's habit, a wry refusal of what the product does not do ("no streaks, no badges"), is one option. The pick governs every line of copy on the page, subhead and footer and button included, not only the headline. A refusal ("no streaks, no notifications") anywhere on a page that did not pick refusal is drift. Menu: refusal of the category's habits, plain description of what it does, a single claim stated once, a question to the reader, an instruction, a quotation or testimony, a story in two sentences, a list of facts, an invitation, a promise with a condition.
+- **Name** (visual work and copy, when the task does not supply a product or brand name): the model's own names are one plain noun, and Ledger comes up in one run of four. Roll the name's shape rather than the name: a plain noun, a coined word, two words joined, a proper name of a person or place, a verb in the imperative, an acronym or initials, a number or a date, a phrase of three or more words, a word from another language, an ordinary word used in a new sense. Then invent a name of that shape. Skip this axis when a name is given.
 - **Motion** (visual work only, when the medium moves): what animates. Fade-up on scroll with hover lift on every card is one option. Menu: nothing moves, one element only, typewriter or reveal on the headline, marquee, a slow ambient drift, hover states only, a single loop that never stops, motion on load then still, parallax layers, motion triggered by the cursor.
 - **Frame**: the scene, speaker, structural device, or reference tradition the piece is built on. For prose and copy: who is speaking, from where, in what form (a letter, a field note, a manifesto, a dialogue, an instruction, a story told from a distance). For visual design: the reference tradition (Swiss modernism, mid-century advertising, brutalism, scientific illustration, editorial magazine, arcade, folk print, corporate annual report, Bauhaus, contemporary product). The model's habitual frame, a domestic vignette in prose or cream editorial paper in design, is one option among many.
 
@@ -90,7 +99,7 @@ Create `.entropy/` in the working directory if it does not exist. Then:
 Append one line to `.entropy/seeds.jsonl`:
 
 ```json
-{"ts":"<ISO 8601>","seed":"<seed>","task":"<task or empty>","scope":"<scope line>","direction":"<direction list as one string>"}
+{"ts":"<ISO 8601>","seed":"<seed>","task":"<task or empty>","scope":"<scope line>","direction":"<direction list as one string>","menus":"<every menu, one axis per line, options numbered>"}
 ```
 
 Write `.entropy/current.json` with the same object, replacing whatever was there.
