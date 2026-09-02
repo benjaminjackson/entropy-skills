@@ -84,7 +84,7 @@ Rendering depends on the machine. A Mac with Chrome renders through headless Chr
 
 The contact-sheet look that finds missing axes has been done on the design arm only. Prose, naming, and code have not had it, so their 20-of-20 tells are unknown.
 
-A second check: every direction line in a run's output shows the menu index and the arithmetic that chose it. A direction without the arithmetic is the model choosing for itself.
+A second check: every direction line in a run's output shows the menu index and the arithmetic that chose it. A direction without the arithmetic is the model choosing for itself. `fidelity.sh` recomputes the hash from the recorded seed and checks every pick against it, and reports how often slot 0, the habit, was picked against chance. On the two most recent design evals the arithmetic was honest, 0 wrong remainders in 425 picks, but the habit rate split: 9.7% against 10% chance on the fixed-axes run, and 16.0% against 9.7% chance on the fixed-lists run, 35 of 219, about three standard deviations high. Honest arithmetic with too many habit hits has one cause the arithmetic cannot see, the menu rearranged after the numbers were known. That is why `run.sh` now saves each plugin run's full transcript and `fidelity.sh` checks that the first menu text comes before the first `shasum` call. Older results have no transcript, so that one eval stays unexplained; replays skip the check since their menus come from the log.
 
 ## Files
 

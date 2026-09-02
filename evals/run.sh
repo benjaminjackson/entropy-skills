@@ -27,7 +27,8 @@ run_one() { # arm prompt-file index
   local dir="$OUT/$name/$arm/$i"; mkdir -p "$dir"
   local task; task=$(cat "$file")
   if [ "$arm" = with ]; then
-    (cd "$dir" && claude -p --setting-sources "" --plugin-dir "$ROOT" --model "$MODEL" --permission-mode bypassPermissions --no-session-persistence "/entropy:inject --headless $task" > output.md 2> stderr.log) || echo "run failed: $name/$arm/$i" >&2
+    # Full transcript kept so fidelity.sh can check that menus were written before the hash was run.
+    (cd "$dir" && claude -p --setting-sources "" --plugin-dir "$ROOT" --model "$MODEL" --permission-mode bypassPermissions --no-session-persistence --output-format stream-json --verbose "/entropy:inject --headless $task" > transcript.jsonl 2> stderr.log && jq -r 'select(.type=="result") | .result' transcript.jsonl > output.md) || echo "run failed: $name/$arm/$i" >&2
   else
     (cd "$dir" && claude -p --setting-sources "" --model "$MODEL" --no-session-persistence "$task" > output.md 2> stderr.log) || echo "run failed: $name/$arm/$i" >&2
   fi

@@ -73,4 +73,48 @@ for f in glob.glob(os.path.join(root,'*','menus.json')):
 if mt:
     print(f"menus: {mo}/{mt} pass the four checks = {100*mo/mt:.0f}%")
     for b in bad[:15]: print("  "+b)
+
+# Dice honesty, from current.json alone: every pick's number must be the hash byte at that axis's
+# position and the remainder must be right; and the habit (slot 0) should land about 1/menu-size of the time.
+import subprocess
+picks=habit=exp=bad_num=bad_mod=0; badruns=set()
+for f in glob.glob(os.path.join(root,'*','.entropy','current.json')):
+    run=f.split(os.sep)[-3]
+    try: j=json.load(open(f))
+    except Exception: continue
+    h=subprocess.run(['shasum','-a','256'],input=j['seed'].encode(),capture_output=True).stdout.decode()[:40]
+    nums=[int(h[i:i+2],16) for i in range(0,40,2)]
+    for i,m in enumerate(re.finditer(r'(\d+) mod (\d+) = (\d+)', j.get('direction',''))):
+        n,k,p=map(int,m.groups()); picks+=1; habit+=(p==0); exp+=1/k
+        if i<20 and n!=nums[i]: bad_num+=1; badruns.add(run)
+        if p!=n%k: bad_mod+=1; badruns.add(run)
+if picks:
+    print(f"dice: {picks} picks, {bad_num} numbers not from the hash position, {bad_mod} wrong remainders" + (f" (runs {', '.join(sorted(badruns,key=int))})" if badruns else ""))
+    print(f"habit: slot 0 picked {habit}/{picks} = {100*habit/picks:.1f}%, chance {100*exp/picks:.1f}%")
+
+# Order, from the transcript when one was saved: the first assistant text that names the habit
+# (every menu marks slot 0 as the habit) must come before the first shell call that runs shasum.
+ordered=total=0; late=[]; missing=0
+for f in glob.glob(os.path.join(root,'*','transcript.jsonl')):
+    run=f.split(os.sep)[-2]; menu_at=hash_at=None
+    try:
+        if json.load(open(os.path.join(os.path.dirname(f),'.entropy','current.json'))).get('from'): continue  # replay: menus came from the log, order does not apply
+    except Exception: pass
+    for idx,line in enumerate(open(f)):
+        try: ev=json.loads(line)
+        except Exception: continue
+        if ev.get('type')!='assistant': continue
+        for c in ev.get('message',{}).get('content',[]) or []:
+            if c.get('type')=='text' and menu_at is None and 'habit' in c.get('text','').lower(): menu_at=idx
+            if c.get('type')=='tool_use' and hash_at is None and 'shasum' in json.dumps(c.get('input',{})): hash_at=idx
+    total+=1
+    if hash_at is None: missing+=1; late.append(f"{run}: no shasum call")
+    elif menu_at is None: late.append(f"{run}: no menu text before the hash")
+    elif menu_at<hash_at: ordered+=1
+    else: late.append(f"{run}: hash at event {hash_at}, menus at {menu_at}")
+if total:
+    print(f"order: {ordered}/{total} runs wrote menus before hashing")
+    for l in late: print("  "+l)
+else:
+    print("order: no transcript.jsonl in this results dir (older run); menus-before-hash not checkable")
 PY
