@@ -54,6 +54,16 @@ Yes, measured. Same brief, ten runs per arm on Opus, a judge scores each set for
 | app name and tagline | 7.7 | 2.0 | 6 of 6 |
 | announcement paragraph | 5.7 | 2.0 | 6 of 6 |
 
+The same brief, twenty times each, rendered and laid out as contact sheets. A hero section for a to-do app, one HTML file, nothing said about look, voice, or name.
+
+With the skill:
+
+![Twenty hero sections made with the skill: a warning card in black Times, a yellow letterpress poster, a green terminal, an orange broadside, a pink page with Sunday across it](docs/images/with.jpg)
+
+Without:
+
+![Twenty hero sections made without the skill: the same bone ground, small dark headline, two buttons, and mock task list card on every one](docs/images/without.jpg)
+
 Run it yourself with `evals/run.sh`. It takes `--model opus|sonnet|haiku`, `--runs`, and `--passes`. Design outputs are rendered with headless Chrome, or Playwright where Chrome is absent, so the judge sees pages, not CSS. `evals/fidelity.sh <results-dir>` then checks each rendered page against its own picks; 81 to 95% of visual picks are honored across runs.
 
 ## How it works
