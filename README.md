@@ -54,7 +54,7 @@ Yes, measured. Same brief, ten runs per arm on Opus, a judge scores each set for
 | app name and tagline | 7.7 | 2.0 | 6 of 6 |
 | announcement paragraph | 5.7 | 2.0 | 6 of 6 |
 
-Run it yourself with `evals/run.sh`. It takes `--model opus|sonnet|haiku`, `--runs`, and `--passes`. Design outputs are rendered with headless Chrome, or Playwright where Chrome is absent, so the judge sees pages, not CSS. `evals/fidelity.sh <results-dir>` then checks each rendered page against its own picks; 95% of visual picks are honored.
+Run it yourself with `evals/run.sh`. It takes `--model opus|sonnet|haiku`, `--runs`, and `--passes`. Design outputs are rendered with headless Chrome, or Playwright where Chrome is absent, so the judge sees pages, not CSS. `evals/fidelity.sh <results-dir>` then checks each rendered page against its own picks; 89 to 95% of visual picks are honored.
 
 ## How it works
 
