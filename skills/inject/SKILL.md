@@ -102,7 +102,11 @@ Append one line to `.entropy/seeds.jsonl`:
 {"ts":"<ISO 8601>","seed":"<seed>","task":"<task or empty>","scope":"<scope line>","direction":"<direction list as one string>","menus":"<every menu, one axis per line, options numbered>","from":"<ts of the log line replayed, or empty>"}
 ```
 
-On a replay, `menus` is the replayed text unchanged, so a replay of a replay still works.
+On a replay, build the new line from the old one so `menus` is carried over byte for byte and a replay of a replay still works. Do not retype the menus:
+
+```bash
+grep -F "\"seed\":\"$SEED\"" .entropy/seeds.jsonl | head -1 | jq -c --arg ts "$TS" --arg task "$TASK" --arg scope "$SCOPE" --arg dir "$DIRECTION" '{ts:$ts, seed, task:$task, scope:$scope, direction:$dir, menus, from:.ts}' >> .entropy/seeds.jsonl
+```
 
 Write `.entropy/current.json` with the same object, replacing whatever was there.
 
