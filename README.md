@@ -29,7 +29,7 @@ Set a direction and do the task in one shot:
 /entropy:inject build me a landing page for my productivity app
 ```
 
-Replay a seed from the log:
+Replay a seed from the log, with the menus it was rolled against:
 
 ```
 /entropy:inject --seed <string> [task]
@@ -77,4 +77,4 @@ Each inject writes to `.entropy/` in the working directory:
 - `seeds.jsonl`: one line per seed, with timestamp, task, and the derived direction. Append only.
 - `current.json`: the most recent seed and direction.
 
-To branch from an earlier point, take a seed from `seeds.jsonl`, open a fresh conversation, and run `/entropy:inject --seed <string>`.
+To branch from an earlier point, open a fresh conversation in the same directory and run `/entropy:inject --seed <string>` with a seed from `seeds.jsonl`. The skill replays the menus recorded on that line, so the picks come out the same. A seed alone does not reproduce a direction; the menus do. To branch in another directory, copy the whole log line into that directory's `seeds.jsonl` first.

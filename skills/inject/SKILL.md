@@ -16,7 +16,7 @@ Based on String Seed of Thought (Sakana AI).
 
 - Empty: generate a new seed, derive a direction, show it, then stop and wait.
 - `<task>`: generate a new seed, derive a direction, show it, then do the task.
-- `--seed <string> [task]`: skip generation and use the given string. Everything else is the same.
+- `--seed <string> [task]`: skip generation and use the given string. If a line in `.entropy/seeds.jsonl` has this exact seed, reuse the menus recorded on that line and skip menu writing; only the hash and the picks are redone, so the direction comes out the same as before. If the seed is not in the log, write menus fresh as for a new seed, and say that the result will not match any earlier run.
 - `--headless`: may be combined with any of the above. Never ask questions. Where the skill would ask, decide and state the decision instead. Once given, it stays on for the rest of the session.
 
 Flags come first. Any text after the flags is the task. `--headless build a hero section` means: headless on, task is "build a hero section".
@@ -48,7 +48,9 @@ The task comes from the arguments, or from the conversation if the arguments are
 
 Do not read the string for inspiration. Every random string looks alike to a model, so a reading lands in the same place every time. Instead, list the options first and let the seed pick.
 
-For each axis from step 2, write a numbered menu of 8 to 12 options, numbered from 0. A menu written from habit is the model's taste with a die attached, so two steps before listing:
+Under `--seed` with a seed found in the log, do not write menus. Read the recorded menus from that log line back exactly, axes and options as written, and go straight to the hash below.
+
+Otherwise, for each axis from step 2, write a numbered menu of 8 to 12 options, numbered from 0. A menu written from habit is the model's taste with a die attached, so two steps before listing:
 
 1. Name the habit first. Before listing anything, write what you would do on this axis with no seed. That is option 0, and it gets exactly one slot.
 2. Read the menu back before hashing. For every pair of options, ask whether a reader could tell them apart in the result. If not, they are one option; replace one of them.
@@ -97,8 +99,10 @@ Create `.entropy/` in the working directory if it does not exist. Then:
 Append one line to `.entropy/seeds.jsonl`:
 
 ```json
-{"ts":"<ISO 8601>","seed":"<seed>","task":"<task or empty>","scope":"<scope line>","direction":"<direction list as one string>","menus":"<every menu, one axis per line, options numbered>"}
+{"ts":"<ISO 8601>","seed":"<seed>","task":"<task or empty>","scope":"<scope line>","direction":"<direction list as one string>","menus":"<every menu, one axis per line, options numbered>","from":"<ts of the log line replayed, or empty>"}
 ```
+
+On a replay, `menus` is the replayed text unchanged, so a replay of a replay still works.
 
 Write `.entropy/current.json` with the same object, replacing whatever was there.
 
@@ -134,7 +138,7 @@ From the image, or from the code if nothing rendered, state four facts: the grou
 
 - One seed at a time. A new inject replaces the old direction. The log keeps history.
 - The direction's scope is the deliverable named in the task. Work that is part of that deliverable inherits the direction. Work outside it is untouched unless the user says to apply the seed to it. A direction set with no task applies to everything until replaced. When it is unclear whether new work is inside the scope, ask with AskUserQuestion. If `--headless` was given, do not ask: say you are applying the direction and let the user object.
-- To branch from an earlier point, copy its seed from `.entropy/seeds.jsonl` and run `/entropy:inject --seed <string>` in a fresh conversation.
+- To branch from an earlier point, run `/entropy:inject --seed <string>` in a fresh conversation in the same working directory, so the log with its menus is there to replay. A seed alone does not reproduce a direction; the menus do. To branch in another directory, copy the whole log line into that directory's `.entropy/seeds.jsonl` first.
 - The user's standing rules win. The direction varies taste inside the box set by CLAUDE.md, the task's own constraints, accessibility, and correctness. It never overrides them.
 - When delegating work inside the scope to a subagent, paste the seed and direction from `.entropy/current.json` into its prompt. Subagents cannot see this conversation.
 - Never soften the direction later in the conversation without saying so. If the user asks for a change, apply it and keep the rest.
