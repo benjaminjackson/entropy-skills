@@ -48,8 +48,8 @@ render() { # dir -> writes dir/page.html and dir/shot.png when the output holds 
   local chrome="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
   [ -x "$chrome" ] || chrome=$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)
   if [ -n "$chrome" ]; then
-    local to; to=$(command -v timeout || command -v gtimeout || true)   # macOS lacks timeout without coreutils; Chrome normally exits in ~2s anyway
-    ${to:+$to 30} "$chrome" --headless --disable-gpu --hide-scrollbars --window-size=1280,800 --screenshot="$dir/shot.png" "file://$dir/page.html" >/dev/null 2>&1 || true
+    local to; to=$(command -v timeout || command -v gtimeout || true)   # macOS lacks timeout without coreutils; Chrome normally exits in ~2s but once ignored TERM for 8 minutes, so -k sends KILL
+    ${to:+$to -k 5 30} "$chrome" --headless --disable-gpu --hide-scrollbars --window-size=1280,800 --screenshot="$dir/shot.png" "file://$dir/page.html" >/dev/null 2>&1 || true
   elif command -v npx >/dev/null; then
     npx --no-install playwright screenshot --viewport-size=1280,800 "file://$dir/page.html" "$dir/shot.png" >/dev/null 2>&1 || true
   fi
