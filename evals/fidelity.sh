@@ -1,13 +1,15 @@
 #!/bin/bash
 # Fidelity: did each plugin-arm result come out the way its picks said? Judged from the screenshot
 # (rendered on demand) against the direction in .entropy/current.json. Usage:
-#   evals/fidelity.sh <results-dir> [prompt-name] [--judge-model M]
+#   evals/fidelity.sh <results-dir> [prompt-name] [--judge-model M] [--jobs N]
+# --jobs caps how many claude processes run at once (default 6).
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-DIR=""; NAME=design; JUDGE=opus
+DIR=""; NAME=design; JUDGE=opus; JOBS=6
 while [ $# -gt 0 ]; do
   case "$1" in
     --judge-model) JUDGE=$2; shift 2;;
+    --jobs) JOBS=$2; shift 2;;
     *) if [ -z "$DIR" ]; then DIR=$1; else NAME=$1; fi; shift;;
   esac
 done
@@ -45,7 +47,8 @@ grade_menus() { # run-dir -> menus.json; are the menus honest, not the model's t
   } | claude -p --setting-sources "" --model "$JUDGE" --no-session-persistence > "$dir/menus.json" 2>/dev/null || true
 }
 
-for d in "$DIR/$NAME"/with/*/; do grade "${d%/}" & grade_menus "${d%/}" & done
+throttle() { while [ "$(jobs -rp | wc -l)" -ge "$JOBS" ]; do sleep 2; done; }
+for d in "$DIR/$NAME"/with/*/; do throttle; grade "${d%/}" & throttle; grade_menus "${d%/}" & done
 wait
 
 python3 - "$DIR/$NAME/with" <<'PY'
