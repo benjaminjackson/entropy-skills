@@ -31,13 +31,13 @@ grade() { # run-dir -> fidelity.json
     else
       echo "No render is available. Judge from the code below."; echo; cat "$dir/output.md"
     fi
-    echo "For every decision that is visible in a static screenshot (ground color, layout skeleton, type family, palette, era or reference tradition, density, ornament, and the like; skip register, copy voice, motion, scope), say whether the page honors it. Be strict: a pixel font on an ordinary two-column split does not honor 'arcade cabinet'."
+    echo "For every decision that is visible in a static screenshot (ground color, layout skeleton, type family, palette, era or reference tradition, density, ornament, and the like; skip motion and scope), say whether the page honors it. Judge register, copy stance, and conceit from the page text too, reading the second body paragraph, the button, and the footer rather than the headline, since the habit hides where the pick was not looking. Be strict: a pixel font on an ordinary two-column split does not honor 'arcade cabinet'; a page whose headline is imperative and whose body is quiet contemplative prose does not honor 'second person imperative'."
     echo 'Reply with JSON only: {"axes":[{"axis":"<name>","pick":"<what was chosen>","match":true|false,"seen":"<what the page actually shows, a few words>"}],"notes":"<one sentence>"}'
   } | (cd "$dir" && claude -p --setting-sources "" --model "$JUDGE" --no-session-persistence --allowedTools Read) > "$dir/fidelity.json" 2>/dev/null || true
 }
 
 grade_menus() { # run-dir -> menus.json; are the menus honest, not the model's taste with a die attached
-  local dir=$1 menus; menus=$(jq -r '.menus // empty' "$dir/.entropy/current.json" 2>/dev/null)
+  local dir=$1 menus; [ -s "$1/menus.json" ] && return 0; menus=$(jq -r '.menus // empty' "$dir/.entropy/current.json" 2>/dev/null)
   [ -n "$menus" ] || return 0
   {
     echo "A designer wrote menus of options for creative decisions, then rolled dice to pick one option per menu. The menus:"
