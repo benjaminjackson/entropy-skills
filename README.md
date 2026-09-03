@@ -50,7 +50,7 @@ Yes, measured. Same brief, ten runs per arm on Opus, a judge scores each set for
 | prompt | with plugin | without | head-to-head wins |
 |---|---|---|---|
 | code architecture | 6.0 | 2.0 | 6 of 6 |
-| landing page hero | 8.0 (20 runs) | 2.0 | 6 of 6 |
+| landing page hero | 8.7 (20 runs) | 2.0 | 6 of 6 |
 | app name and tagline | 7.7 | 2.0 | 6 of 6 |
 | announcement paragraph | 5.7 | 2.0 | 6 of 6 |
 
