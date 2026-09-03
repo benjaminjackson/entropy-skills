@@ -32,7 +32,7 @@ Unless `--seed` or `--current` was given, run:
 openssl rand -base64 48
 ```
 
-The output is the seed. Do not invent, edit, or shorten it.
+The output is the seed. Do not invent, edit, or shorten it. Do nothing else with it yet. The hash in step 3 takes the menus as input, so it cannot run until they exist.
 
 ### 2. Read the task and infer the domain
 
@@ -48,7 +48,11 @@ The task comes from the arguments, or from the conversation if the arguments are
 
 Do not read the string for inspiration. Every random string looks alike to a model, so a reading lands in the same place every time. Instead, list the options first and let the seed pick.
 
-Under `--seed` with a seed found in the log, do not write menus. Read the recorded menus from that log line back exactly, axes and options as written, and go straight to the hash below.
+Under `--seed` with a seed found in the log, do not write menus. Put the recorded menus back on disk exactly as they were, then go straight to the hash below:
+
+```bash
+mkdir -p .entropy && grep -F "\"seed\":\"$SEED\"" .entropy/seeds.jsonl | head -1 | jq -j .menus > .entropy/menus.txt
+```
 
 Otherwise, for each axis from step 2, write a numbered menu of 8 to 12 options, numbered from 0. A menu written from habit is the model's taste with a die attached, so two steps before listing:
 
@@ -82,13 +86,13 @@ An option is a treatment, not a label. The pick governs every instance of what t
 - **Motion** (visual work only, when the medium moves): what animates. A reader should be able to say what moved and when. Governs everything that moves, hover states and transitions included. The habit, fade-up on scroll with hover lift on every card, is one option; nothing moves is another. Examples far apart: one element only; a marquee; motion on load, then still; nothing moves; a typewriter reveal on the headline; a slow ambient drift; hover states only; one loop that never stops; parallax layers; motion that follows the cursor; a single blink.
 - **Frame**: the scene, speaker, structural device, or reference tradition the piece is built on. A reader should be able to name the tradition or the speaker. For prose and copy: who is speaking, from where, in what form. For visual design: the reference tradition. Governs every element the tradition has an opinion on: type, color, layout idiom, the form the copy takes. The habit, a domestic vignette in prose or cream editorial paper in design, is one option. The menu for visual work spans print, screen, and physical traditions, with at least three options from the web era, since a menu of print traditions gives every page the same flat retro look. Examples far apart, prose: a field note; a manifesto; a story told from a distance; a letter; a dialogue; an instruction manual; a catalogue entry; a dispatch; a riddle; a eulogy. Visual: Swiss modernism; a 2010s SaaS product page; an arcade cabinet; mid-century advertising; brutalist web; a scientific plate; folk print; an operating system dashboard; Y2K web; a corporate annual report; a transit sign; a theater poster; an app store listing; a museum wall label; a game HUD.
 
-Then turn the seed into numbers. Run:
+Write the menus to `.entropy/menus.txt` with a heredoc, one axis per line, options numbered from 0, exactly as shown to the user. Then turn the seed and the menus into numbers together:
 
 ```bash
-printf '%s' "$SEED" | shasum -a 256 | cut -c1-40 | fold -w2 | while read h; do echo $((16#$h)); done
+{ printf '%s' "$SEED"; cat .entropy/menus.txt; } | shasum -a 256 | cut -c1-40 | fold -w2 | while read h; do echo $((16#$h)); done
 ```
 
-This prints twenty numbers from 0 to 255, one per line. Axis 1 uses the first number, axis 2 the second, and so on. The pick for an axis is that number modulo the size of its menu. Show the arithmetic for every axis, for example: `axis 3: 203 mod 9 = 5, option 5`. Do not adjust a pick after seeing it.
+This prints twenty numbers from 0 to 255, one per line. The menus are part of the input, so the numbers cannot exist before the menus do, and a menu edited after the numbers are known changes every number on every axis. Hash once, after the file is written; never hash the seed alone. Axis 1 uses the first number, axis 2 the second, and so on. The pick for an axis is that number modulo the size of its menu. Show the arithmetic for every axis, for example: `axis 3: 203 mod 9 = 5, option 5`. Do not adjust a pick after seeing it.
 
 Commit to what was picked. Use judgment only to make the combination good, never to move a pick back toward the default. If the picks clash, make the clash work.
 
@@ -105,14 +109,16 @@ Create `.entropy/` in the working directory if it does not exist. Then:
 Append one line to `.entropy/seeds.jsonl`:
 
 ```json
-{"ts":"<ISO 8601>","seed":"<seed>","task":"<task or empty>","scope":"<scope line>","direction":"<direction list as one string>","menus":"<every menu, one axis per line, options numbered>","from":"<ts of the log line replayed, or empty>"}
+{"ts":"<ISO 8601>","seed":"<seed>","task":"<task or empty>","scope":"<scope line>","direction":"<direction list as one string>","menus":"<the contents of .entropy/menus.txt>","from":"<ts of the log line replayed, or empty>"}
 ```
 
-On a replay, build the new line from the old one so `menus` is carried over byte for byte and a replay of a replay still works. Do not retype the menus:
+`menus` is the file the hash read, byte for byte, so a replay hashes the same input. Do not retype it; take it from the file:
 
 ```bash
-grep -F "\"seed\":\"$SEED\"" .entropy/seeds.jsonl | head -1 | jq -c --arg ts "$TS" --arg task "$TASK" --arg scope "$SCOPE" --arg dir "$DIRECTION" '{ts:$ts, seed, task:$task, scope:$scope, direction:$dir, menus, from:.ts}' >> .entropy/seeds.jsonl
+jq -nc --arg ts "$TS" --arg seed "$SEED" --arg task "$TASK" --arg scope "$SCOPE" --arg dir "$DIRECTION" --arg from "$FROM" --rawfile menus .entropy/menus.txt '{ts:$ts, seed:$seed, task:$task, scope:$scope, direction:$dir, menus:$menus, from:$from}' >> .entropy/seeds.jsonl
 ```
+
+`$FROM` is the `ts` of the log line replayed, or empty.
 
 Write `.entropy/current.json` with the same object, replacing whatever was there.
 
@@ -148,7 +154,7 @@ From the image, or from the code if nothing rendered, state one fact per axis, r
 
 - One seed at a time. A new inject replaces the old direction. The log keeps history.
 - The direction's scope is the deliverable named in the task. Work that is part of that deliverable inherits the direction. Work outside it is untouched unless the user says to apply the seed to it. A direction set with no task applies to everything until replaced. When it is unclear whether new work is inside the scope, ask with AskUserQuestion. If `--headless` was given, do not ask: say you are applying the direction and let the user object.
-- To branch from an earlier point, run `/entropy:inject --seed <string>` in a fresh conversation in the same working directory, so the log with its menus is there to replay. A seed alone does not reproduce a direction; the menus do. To branch in another directory, copy the whole log line into that directory's `.entropy/seeds.jsonl` first.
+- To branch from an earlier point, run `/entropy:inject --seed <string>` in a fresh conversation in the same working directory, so the log with its menus is there to replay. A seed alone does not reproduce a direction; the menus do, because they are part of what is hashed. To branch in another directory, copy the whole log line into that directory's `.entropy/seeds.jsonl` first. Log lines written before the menus went into the hash replay to different picks; their `direction` field still records what was picked.
 - The user's standing rules win. The direction varies taste inside the box set by CLAUDE.md, the task's own constraints, accessibility, and correctness. It never overrides them.
 - When delegating work inside the scope to a subagent, paste the seed and direction from `.entropy/current.json` into its prompt. Subagents cannot see this conversation.
 - Never soften the direction later in the conversation without saying so. If the user asks for a change, apply it and keep the rest.
