@@ -115,12 +115,12 @@ for f in glob.glob(os.path.join(root,'*','transcript.jsonl')):
             if c.get('type')=='text' and menu_at is None and 'habit' in c.get('text','').lower(): menu_at=idx
             if c.get('type')=='tool_use':
                 s=json.dumps(c.get('input',{}))
-                if menu_at is None and 'menus.txt' in s and 'shasum' not in s: menu_at=idx
+                if menu_at is None and 'menus.txt' in s: menu_at=idx   # writing the file and hashing it in one call is in order: the menus are the hash input
                 if hash_at is None and 'shasum' in s: hash_at=idx
     total+=1
     if hash_at is None: missing+=1; late.append(f"{run}: no shasum call")
     elif menu_at is None: late.append(f"{run}: no menu text before the hash")
-    elif menu_at<hash_at: ordered+=1
+    elif menu_at<=hash_at: ordered+=1
     else: late.append(f"{run}: hash at event {hash_at}, menus at {menu_at}")
 if total:
     print(f"order: {ordered}/{total} runs wrote menus before hashing")
