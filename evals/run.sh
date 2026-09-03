@@ -1,11 +1,12 @@
 #!/bin/bash
 # Runs each prompt N times with and without the plugin, then asks one judge per arm
 # how varied the set is. Prints a score table. Usage:
-#   evals/run.sh [--model opus|sonnet|haiku] [--runs N] [--passes N] [--judge-model M] [--judge-model-2 M] [prompt-file ...]
+#   evals/run.sh [--model opus|sonnet|haiku] [--runs N] [--passes N] [--jobs N] [--judge-model M] [--judge-model-2 M] [prompt-file ...]
+# --jobs caps how many claude processes run at once (default 6), so a 40-run eval does not take the whole machine.
 # Each arm is scored PASSES times with responses shuffled, and both arms go head to head, blind, on two judge models.
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-MODEL=opus; RUNS=5; PASSES=3; JUDGE=opus; JUDGE2=sonnet; PROMPTS=()
+MODEL=opus; RUNS=5; PASSES=3; JOBS=6; JUDGE=opus; JUDGE2=sonnet; PROMPTS=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --model) MODEL=$2; shift 2;;
@@ -13,6 +14,7 @@ while [ $# -gt 0 ]; do
     --judge-model) JUDGE=$2; shift 2;;
     --judge-model-2) JUDGE2=$2; shift 2;;
     --passes) PASSES=$2; shift 2;;
+    --jobs) JOBS=$2; shift 2;;
     *) PROMPTS+=("$1"); shift;;
   esac
 done
@@ -21,6 +23,8 @@ case "$MODEL" in opus|sonnet|haiku) ;; *) echo "model must be opus, sonnet, or h
 
 OUT="$ROOT/evals/results/$(date -u +%Y%m%dT%H%M%SZ)-$MODEL"
 mkdir -p "$OUT"
+
+throttle() { while [ "$(jobs -rp | wc -l)" -ge "$JOBS" ]; do sleep 2; done; }   # bash 3.2 has no wait -n
 
 run_one() { # arm prompt-file index
   local arm=$1 file=$2 i=$3 name; name=$(basename "$file" .md)
@@ -36,7 +40,7 @@ run_one() { # arm prompt-file index
 
 for file in "${PROMPTS[@]}"; do
   for arm in with without; do
-    for i in $(seq 1 "$RUNS"); do run_one "$arm" "$file" "$i" & done
+    for i in $(seq 1 "$RUNS"); do throttle; run_one "$arm" "$file" "$i" & done
   done
 done
 wait
@@ -99,8 +103,8 @@ head_to_head() { # prompt-file pass judge-model -> writes h2h-<model>-<pass>.jso
 
 for file in "${PROMPTS[@]}"; do
   for pass in $(seq 1 "$PASSES"); do
-    for arm in with without; do judge_set "$file" "$arm" "$pass" & done
-    for jm in "$JUDGE" "$JUDGE2"; do head_to_head "$file" "$pass" "$jm" & done
+    for arm in with without; do throttle; judge_set "$file" "$arm" "$pass" & done
+    for jm in "$JUDGE" "$JUDGE2"; do throttle; head_to_head "$file" "$pass" "$jm" & done
   done
 done
 wait
