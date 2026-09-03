@@ -80,23 +80,27 @@ if mt:
 # Dice honesty, from current.json alone: every pick's number must be the hash byte at that axis's
 # position and the remainder must be right; and the habit (slot 0) should land about 1/menu-size of the time.
 import subprocess
-picks=habit=exp=bad_num=bad_mod=0; badruns=set()
+picks=habit=exp=bad_num=bad_mod=0; badruns=set(); old_hash=set()
 for f in glob.glob(os.path.join(root,'*','.entropy','current.json')):
     run=f.split(os.sep)[-3]
     try: j=json.load(open(f))
     except Exception: continue
-    h=subprocess.run(['shasum','-a','256'],input=j['seed'].encode(),capture_output=True).stdout.decode()[:40]
-    nums=[int(h[i:i+2],16) for i in range(0,40,2)]
-    for i,m in enumerate(re.finditer(r'(\d+) mod (\d+) = (\d+)', j.get('direction',''))):
+    def hashed(s): h=subprocess.run(['shasum','-a','256'],input=s.encode(),capture_output=True).stdout.decode()[:40]; return [int(h[i:i+2],16) for i in range(0,40,2)]
+    nums=hashed(j['seed']+j.get('menus',''))   # seed and menus hashed together, so the numbers cannot predate the menus
+    seed_only=hashed(j['seed'])
+    found=list(re.finditer(r'(\d+) mod (\d+) = (\d+)', j.get('direction','')))
+    if found and int(found[0].group(1))!=nums[0] and int(found[0].group(1))==seed_only[0]: nums=seed_only; old_hash.add(run)
+    for i,m in enumerate(found):
         n,k,p=map(int,m.groups()); picks+=1; habit+=(p==0); exp+=1/k
         if i<20 and n!=nums[i]: bad_num+=1; badruns.add(run)
         if p!=n%k: bad_mod+=1; badruns.add(run)
 if picks:
     print(f"dice: {picks} picks, {bad_num} numbers not from the hash position, {bad_mod} wrong remainders" + (f" (runs {', '.join(sorted(badruns,key=int))})" if badruns else ""))
     print(f"habit: slot 0 picked {habit}/{picks} = {100*habit/picks:.1f}%, chance {100*exp/picks:.1f}%")
+    if old_hash: print(f"hash: {len(old_hash)} runs hashed the seed alone, without the menus (runs {', '.join(sorted(old_hash,key=int))})")
 
-# Order, from the transcript when one was saved: the first assistant text that names the habit
-# (every menu marks slot 0 as the habit) must come before the first shell call that runs shasum.
+# Order, from the transcript when one was saved: the menus (assistant text naming the habit, or the
+# shell call that writes menus.txt) must come before the first shell call that runs shasum.
 ordered=total=0; late=[]; missing=0
 for f in glob.glob(os.path.join(root,'*','transcript.jsonl')):
     run=f.split(os.sep)[-2]; menu_at=hash_at=None
@@ -109,7 +113,10 @@ for f in glob.glob(os.path.join(root,'*','transcript.jsonl')):
         if ev.get('type')!='assistant': continue
         for c in ev.get('message',{}).get('content',[]) or []:
             if c.get('type')=='text' and menu_at is None and 'habit' in c.get('text','').lower(): menu_at=idx
-            if c.get('type')=='tool_use' and hash_at is None and 'shasum' in json.dumps(c.get('input',{})): hash_at=idx
+            if c.get('type')=='tool_use':
+                s=json.dumps(c.get('input',{}))
+                if menu_at is None and 'menus.txt' in s and 'shasum' not in s: menu_at=idx
+                if hash_at is None and 'shasum' in s: hash_at=idx
     total+=1
     if hash_at is None: missing+=1; late.append(f"{run}: no shasum call")
     elif menu_at is None: late.append(f"{run}: no menu text before the hash")
