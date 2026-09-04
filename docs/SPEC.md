@@ -21,8 +21,23 @@ The plugin must work for any task where variety beats the default: visual design
 9. The result is read back in order: the brief's tests first; then one fact from the least prominent place in the result, tied to a sentence of the strategy; then a search for the word and its hops, which are reasoning and not decoration. Any miss is rewritten before the result is shown. Visual work is rendered and looked at before reading.
 10. Nothing is written to disk without `--log`. Under `--log`, one line per run goes to `.entropy/seeds.jsonl` and the same object to `.entropy/current.json`, with the strategies file beside them. `--current` re-states a logged run. `--headless` never stops or asks and turns `--log` on, for scripts.
 11. `--seed <string>` reuses a string, so the same words come out. The strategy is written fresh; the log is a record, not an input.
+14. `--word <word>` skips the seed and the draw and uses the given word. `--strategy` ends the reply after the chain and the strategy, even under `--headless`. Both exist so another skill can run one draw in a fresh context and read the strategy back.
 12. There is no hook. Nothing reads `.entropy/` unless a flag asks.
 13. The user's standing rules and the brief win over the word. Scope is the deliverable the task names; work outside it is untouched unless the user says otherwise. Subagents inside the scope get the brief and the strategy pasted in. The strategy is never softened later without saying so.
+
+## The lottery
+
+`/entropy:lottery` runs the draw many times and reads what repeats. What must be true:
+
+1. Every strategy comes from its own context, one agent per word, each running `/entropy:inject --headless --strategy --word <word>`. Several strategies in one call are never a round; a model that sees the others avoids repeating them and the habit hides.
+2. The strategies come from the model that will build. The habits found are that model's habits. The default is opus for strategies, judge, and builds.
+3. One judge per round reads the round's strategies in shuffled order and returns, by schema, every feature three or more share, each with a test a reader or a grep could run, and a distance score and a brief pass or fail for every strategy. It never says which is best.
+4. Every named habit becomes a brief line, `Do not: <habit>`, with the judge's test, for the next round. Bans come from data, not from the skill author.
+5. Filtering and ranking are plain code: brief failures out, habit members out, sort by distance, keep K. No model touches the ranking.
+6. The human picks from strategies. Builds happen after the pick, or before it only under `--build`.
+7. Every file is written once, by the agent that made it: `round-<r>/<NN>.md` by the strategy agent, `round-<r>/judge.json` by the judge, under `.entropy/lottery/<ts>/`. The lottery always writes; the files are the deliverable.
+8. One line per named habit is appended to `.entropy/habits.jsonl`, never rewritten. This is the atlas of what the model reaches for, task by task.
+9. The word draw, the brief, and the read-back are inject's, unchanged. The lottery adds a loop around inject, not a second procedure.
 
 ## Decisions and why
 
@@ -46,6 +61,12 @@ The plugin must work for any task where variety beats the default: visual design
 
 **The evals are a regression check, not a compass.** Seventeen rounds on one landing-page prompt with a model as judge optimized for what the judge liked, which was the same paper and risograph the model drifts to anyway, and never saw a brief or a person. Score sat at 8 for two days and 3,000 words. No skill change lands on a judge number alone from here. Every change is tried by hand on a real task with a brief first, and the eval only says whether it broke something.
 
+**Strategies, not pages.** A strategy is about a hundred tokens and a page about twenty thousand. Twenty-four Opus strategies cost less than two pages, so the lottery can afford many draws, and what recurs in strategies is what would recur in pages: the design regression showed the shared ground, eyebrow, and copy conceit were all decided at the strategy level.
+
+**Recurrence names the habit; the author does not.** Each territory pick, costume and skeleton, bought back one point on the design prompt and left the next habit standing. A ban moves a habit only once it is named, and the list of habits differs per task. A judge names shared features reliably, nine of ten blind in the test session, and is unreliable at best. So the judge names and the human picks.
+
+**Same model for strategies and builds.** Cheaper strategy agents would give the cheaper model's atlas. There is nothing to save at a hundred tokens each.
+
 ## What the eval must show
 
 The claim is still: outputs vary more with the skill than without. `evals/run.sh` runs the same prompt in two arms and judges the sets for variety on Opus, never Fable, three shuffled passes, `--jobs` capped so the machine stays usable, `--arms with` to run one arm alone. The word version has not been through it yet. The menu version's design score was 8.3 against 2.0; the word version may score lower on that prompt, since a word has less reach than a forced menu, and a drop to 7 is acceptable if the hand tests hold.
@@ -57,7 +78,8 @@ The hand tests that stand in for a person until then: a headline with a length c
 ## Files
 
 - `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`: manifests.
-- `skills/inject/SKILL.md`: the procedure, items 1 through 13.
+- `skills/inject/SKILL.md`: the procedure, items 1 through 14.
+- `skills/lottery/SKILL.md`, `skills/lottery/lottery.js`: the loop around inject and the Workflow script that runs it.
 - `evals/run.sh`, `evals/tells.sh`: variety eval and tell counter; both still apply.
 - `evals/fidelity.sh`: menu-era fidelity check; kept for the history, not applicable.
 - `docs/history/spec-menus.md`: the earlier specs and every eval through round 17.

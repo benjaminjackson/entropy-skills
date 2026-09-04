@@ -39,6 +39,19 @@ Flags, all optional, before the task:
 - `--log`: write the run to `.entropy/seeds.jsonl` and `.entropy/current.json`. Off by default. Nothing touches disk without it.
 - `--current`: re-state the logged brief and strategy after a long conversation or a compaction. Needs a run made with `--log`.
 - `--headless`: never stop, never ask. For scripts. Turns `--log` on.
+- `--word <word>`: skip the draw and use this word. `--strategy`: stop after the strategy. Both are for the lottery below.
+
+## Lottery
+
+One word gives one strategy that is not the default. It does not tell you what the default was. `/entropy:lottery` draws twenty-four words, writes one strategy each in twenty-four separate contexts, and has a judge name what they share. Whatever three or more share is the model's habit for this task. Each habit becomes a ban, the draw runs again, and the strategies farthest from the crowd come back for you to pick from.
+
+```
+/entropy:lottery Write the opening sentence of a short story about a man who comes home to find his house repainted a color he did not choose.
+```
+
+Flags: `--n` words per round (24), `--rounds` (2), `--keep` (6), `--build` to render the kept strategies before the pick, `--model` and `--judge-model` (opus), `--headless`, `--seed`. It uses the Claude Code Workflow tool; every strategy file and judge verdict lands under `.entropy/lottery/<ts>/`, and every named habit is appended to `.entropy/habits.jsonl`, one line each, so the habits build up per task over time.
+
+A run with defaults costs about three page builds of Opus quota. Keep the strategy model the same as the one that will build; the habits found are that model's.
 
 ## What is held constant
 

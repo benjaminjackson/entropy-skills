@@ -1,7 +1,7 @@
 ---
 name: inject
 description: Inject a random seed into any creative task (visual design, prose, naming, code architecture, anything where variety beats the default) so the result does not regress to the mean. Use when the user runs /entropy:inject, asks for "something different", "surprise me", "not the usual", or wants several distinct takes on the same brief.
-argument-hint: "[--log] [--headless] [--seed <string>] [task] | --current"
+argument-hint: "[--log] [--headless] [--strategy] [--seed <string> | --word <word>] [task] | --current"
 ---
 
 # Entropy: inject
@@ -18,6 +18,8 @@ Based on String Seed of Thought (Sakana AI): randomness enters as selection, nev
 - `<task>`: new seed, one strategy, one result. For short work, a line, a name, a paragraph, a function, the result comes in the same reply. For long work, a page, a module, a document, stop after the strategy and wait: the user says go, or more.
 - `<task>` asking for N variations: N words, N strategies, N results, one each.
 - `--seed <string> [task]`: use the given string. The same words come out, so the same starting points; the strategy is written fresh.
+- `--word <word>`: skip the seed and the draw; use this word. One word, one strategy.
+- `--strategy`: stop after the chain and the strategy, even under `--headless`. Nothing else is printed.
 - `--current`: do not generate. Read `.entropy/current.json` and re-state its brief and strategy. If the file is missing, say so and stop.
 - `--log`: record the run in `.entropy/seeds.jsonl` and `.entropy/current.json`. Off by default. Stays on for the session.
 - `--headless`: never stop and never ask. Build in the same reply. Turns `--log` on. Stays on for the session.
@@ -46,7 +48,7 @@ Six words from the seed, one line:
 printf '%s' "$SEED" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do awk -v n=$((16#$h)) '/^[a-z]+$/ && length>=4 && length<=9 {a[++c]=$0} END{i=n%c+1; print i, a[i]}' /usr/share/dict/words; done
 ```
 
-Each line is a position and a word, drawn from the lowercase words of four to nine letters. Use the first word. For N variations, use the first N. When the user says more, take the next unused word; past the sixth, draw six more from the seed with a round number appended, `printf '%s2' "$SEED"`, then `3`. Nothing already shown is discarded. If the dictionary file is missing, say so and stop; do not invent words.
+Each line is a position and a word, drawn from the lowercase words of four to nine letters. Use the first word. For N variations, use the first N. When the user says more, take the next unused word; past the sixth, draw six more from the seed with a round number appended, `printf '%s2' "$SEED"`, then `3`. Nothing already shown is discarded. If the dictionary file is missing, say so and stop; do not invent words. Under `--word`, skip the seed and the draw and use the given word.
 
 ### 4. Strategy
 
@@ -63,6 +65,8 @@ Under `--log` only, write the strategies to `.entropy/strategies.txt` with a her
 **The way in.** The chain on one line, the strategy under it. For several, each under its number.
 
 For short work, the result follows at once, under the strategy, and the reply ends: keep it, or say more. For long work, the reply ends: go, or more. Under both, one small line with the seed.
+
+Under `--strategy`, the reply is the held-constant lines, the chain, and the strategy, and it ends there.
 
 Then, unless the work is short or `--headless` was given, stop and wait.
 
