@@ -1,7 +1,7 @@
 ---
 name: inject
 description: Inject a random seed into any creative task (visual design, prose, naming, code architecture, anything where variety beats the default) so the result does not regress to the mean. Use when the user runs /entropy:inject, asks for "something different", "surprise me", "not the usual", or wants several distinct takes on the same brief.
-argument-hint: "[--headless] [--seed <string>] [task] | --current"
+argument-hint: "[--log] [--headless] [--seed <string>] [task] | --current"
 ---
 
 # Entropy: inject
@@ -20,7 +20,8 @@ This is a tool for widening the field: a first draft, a whole page, several dist
 - `<task>`: new seed, direction shown, then stop and wait for the user before doing the task. The user says go, asks for a re-roll, which is a new seed, or drops an axis, and the rest holds. Any change the user asks for is applied and the rest kept.
 - `--seed <string> [task]`: use the given string. If a line in `.entropy/seeds.jsonl` has this exact seed, put its recorded sketch and menus back on disk and skip to the hash, so the picks come out the same. If not, proceed as for a new seed and say the result will not match any earlier run.
 - `--current`: do not generate. Read `.entropy/current.json` and re-state its seed, brief, and direction so the rest of the conversation follows them. If the file is missing, say so and stop.
-- `--headless`: combine with any of the above. Do not stop after the direction; do the task in the same reply. Never ask questions; decide and state the decision. Stays on for the session.
+- `--log`: record the run in `.entropy/seeds.jsonl` and `.entropy/current.json` so it can be replayed with `--seed` or restated with `--current`. Off by default. Stays on for the session.
+- `--headless`: combine with any of the above. Do not stop after the direction; do the task in the same reply. Never ask questions; decide and state the decision. Turns `--log` on. Stays on for the session.
 
 Flags come first. Text after the flags is the task.
 
@@ -75,7 +76,9 @@ Under those, for the record: the seed, the scope, and one line per axis with the
 
 Then, unless `--headless` was given, stop and wait. Say: go, re-roll, or drop an axis.
 
-### 6. Record
+### 6. Record, under `--log` only
+
+Without `--log`, skip this step. The menus and sketch files stay on disk as working files and nothing else is written.
 
 ```bash
 mkdir -p .entropy
@@ -103,6 +106,6 @@ For visual work, render before reading: headless Chrome, `"$CHROME" --headless -
 - One seed at a time. A new inject replaces the old direction. The log keeps history.
 - The scope is the deliverable named in the task. Work inside it inherits the direction; work outside it does not. When unclear, ask; under `--headless`, say you are applying it and let the user object.
 - The user's standing rules and the brief win. The direction varies taste inside that box and never overrides it.
-- To replay, run `/entropy:inject --seed <string>` in the same directory, where the log holds the sketch and menus. A seed alone does not reproduce a direction. To replay elsewhere, copy the whole log line first.
-- When delegating inside the scope, paste seed, brief, and direction from `.entropy/current.json` into the subagent's prompt.
+- To replay a run made under `--log`, run `/entropy:inject --seed <string>` in the same directory, where the log holds the sketch and menus. A seed alone does not reproduce a direction. To replay elsewhere, copy the whole log line first.
+- When delegating inside the scope, paste the seed, brief, and direction from the reply into the subagent's prompt.
 - Never soften the direction later without saying so. If the user asks for a change, apply it and keep the rest.
