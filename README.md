@@ -51,7 +51,7 @@ One word gives one strategy that is not the default. It does not tell you what t
 
 Flags: `--n` words per round (24), `--rounds` (1), `--keep` (6), `--build` to render the kept strategies before the pick, `--model` and `--judge-model` (opus), `--headless`, `--seed`. It uses the Claude Code Workflow tool; every strategy file and judge verdict lands under `.entropy/lottery/<ts>/`, and every named habit is appended to `.entropy/habits.jsonl`, one line each, so the habits build up per task over time.
 
-A run with defaults is twenty-five Opus agents and about 1.2 million tokens, most of it input. On the story prompt it named twelve habits and returned six survivors that read nothing alike. Keep the strategy model the same as the one that will build; the habits found are that model's.
+A run with defaults is twenty-five Opus agents and about 1.2 million tokens, most of it input. On the story prompt it named twelve habits and returned six survivors that read nothing alike. Judged for variety against six plain runs of the same prompt, the six built survivors scored 6 against 2 on a design brief and 3 against 2 on a blog paragraph. Keep the strategy model the same as the one that will build; the habits found are that model's.
 
 ## What is held constant
 
