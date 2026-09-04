@@ -6,13 +6,13 @@ argument-hint: "[--n N] [--rounds R] [--keep K] [--build] [--model M] [--judge-m
 
 # Entropy: lottery
 
-One word from `/entropy:inject` gives one strategy that is not the default. It does not tell you what the default was. Run the draw twenty-four times in twenty-four separate contexts and what recurs is the model's habit for this task, whether or not anyone could have named it in advance. A judge can name it, because naming what a set shares is the one thing a judge does well. Named, it becomes a brief line. Then draw again with that line in force, and keep the strategies that sit farthest from everything else.
+One word from `/entropy:inject` gives one strategy that is not the default. It does not tell you what the default was. Run the draw twenty-four times in twenty-four separate contexts and what recurs is the model's habit for this task, whether or not anyone could have named it in advance. A judge can name it, because naming what a set shares is the one thing a judge does well, and it can score how far each strategy sits from the rest. The survivors are the farthest. Banning the habits and drawing again does not spread the field; it moves the whole field to the model's next default, so a second round is a map of that layer, not a better pick.
 
 This skill runs that loop with the Workflow tool. Running this skill is the user's opt-in to it.
 
 ## Arguments
 
-Flags first, task after. `--n` words per round, default 24. `--rounds`, default 2. `--keep`, default 6. `--build` renders the kept strategies before the pick; off by default, the user picks from strategies. `--model` for the strategy and build agents, default opus. `--judge-model`, default opus. `--headless` never stops. `--seed <string>` replaces the random seed.
+Flags first, task after. `--n` words per round, default 24. `--rounds`, default 1; a second round bans the three most shared habits and draws again, which maps the model's next layer and does not spread the field. `--keep`, default 6. `--build` renders the kept strategies before the pick; off by default, the user picks from strategies. `--model` for the strategy and build agents, default opus. `--judge-model`, default opus. `--headless` never stops. `--seed <string>` replaces the random seed.
 
 The strategies must come from the model that will build, because the habits found are that model's habits. Do not lower `--model` to save quota; a strategy is a hundred tokens.
 

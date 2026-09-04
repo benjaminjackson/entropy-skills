@@ -43,13 +43,13 @@ Flags, all optional, before the task:
 
 ## Lottery
 
-One word gives one strategy that is not the default. It does not tell you what the default was. `/entropy:lottery` draws twenty-four words, writes one strategy each in twenty-four separate contexts, and has a judge name what they share. Whatever three or more share is the model's habit for this task. Each habit becomes a ban, the draw runs again, and the strategies farthest from the crowd come back for you to pick from.
+One word gives one strategy that is not the default. It does not tell you what the default was. `/entropy:lottery` draws twenty-four words, writes one strategy each in twenty-four separate contexts, and has a judge name what they share. Whatever three or more share is the model's habit for this task. The strategies farthest from the crowd come back for you to pick from. A second round, `--rounds 2`, bans the top habits and draws again; in testing that moved all six strategies to the model's next default rather than spreading them, so it is a way to map the next layer, not a better pick.
 
 ```
 /entropy:lottery Write the opening sentence of a short story about a man who comes home to find his house repainted a color he did not choose.
 ```
 
-Flags: `--n` words per round (24), `--rounds` (2), `--keep` (6), `--build` to render the kept strategies before the pick, `--model` and `--judge-model` (opus), `--headless`, `--seed`. It uses the Claude Code Workflow tool; every strategy file and judge verdict lands under `.entropy/lottery/<ts>/`, and every named habit is appended to `.entropy/habits.jsonl`, one line each, so the habits build up per task over time.
+Flags: `--n` words per round (24), `--rounds` (1), `--keep` (6), `--build` to render the kept strategies before the pick, `--model` and `--judge-model` (opus), `--headless`, `--seed`. It uses the Claude Code Workflow tool; every strategy file and judge verdict lands under `.entropy/lottery/<ts>/`, and every named habit is appended to `.entropy/habits.jsonl`, one line each, so the habits build up per task over time.
 
 A run with defaults costs about three page builds of Opus quota. Keep the strategy model the same as the one that will build; the habits found are that model's.
 
