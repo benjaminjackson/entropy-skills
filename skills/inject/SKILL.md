@@ -14,12 +14,12 @@ Based on String Seed of Thought (Sakana AI): randomness enters as selection, nev
 
 `$ARGUMENTS` is one of:
 
-- Empty: new seed, strategies shown, then stop and wait.
-- `<task>`: new seed, strategies shown, then stop and wait for the user. The user picks a strategy by number, says go to take the one the dice chose, or says re-roll for a new seed. A task that asks for N variations takes N strategies on go, one result each.
-- `--seed <string> [task]`: use the given string. Same words come out, so the same starting points; the strategies are written fresh.
+- Empty: new seed, five strategies shown, then stop and wait.
+- `<task>`: new seed, five strategies. For short work, a line, a name, a paragraph, a function, all five are built in the same reply, one result each. For long work, a page, a module, a document, stop after the strategies and wait: the user picks a number, says more, or says go and the die chooses.
+- `--seed <string> [task]`: use the given string. The same words come out, so the same starting points; the strategies are written fresh.
 - `--current`: do not generate. Read `.entropy/current.json` and re-state its brief and chosen strategy. If the file is missing, say so and stop.
 - `--log`: record the run in `.entropy/seeds.jsonl` and `.entropy/current.json`. Off by default. Stays on for the session.
-- `--headless`: do not stop; take the strategy the dice chose and do the task in the same reply. Never ask questions. Turns `--log` on. Stays on for the session.
+- `--headless`: never stop and never ask. For long work, build the strategy the die chose in the same reply. Turns `--log` on. Stays on for the session.
 
 Flags come first. Text after the flags is the task.
 
@@ -48,7 +48,9 @@ N=$(wc -l < .entropy/words.txt | tr -d ' ')
 printf '%s' "$SEED" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do sed -n "$((16#$h % N + 1))p" .entropy/words.txt; done
 ```
 
-The first five words are starting points. The sixth is the die: its line number modulo 5, plus 1, is the number of the strategy the dice chose. Get the line with `grep -nx "$WORD" .entropy/words.txt`. If the dictionary file is missing, say so and stop; do not invent words.
+The first five words are starting points. The sixth is the die: its line number modulo 5, plus 1, is the strategy it chooses when nobody else does. Get the line with `grep -nx "$WORD" .entropy/words.txt`. If the dictionary file is missing, say so and stop; do not invent words.
+
+When the user says more, draw five more from the same seed with a round number appended, `printf '%s2' "$SEED"` for the second round, then `3`, and number the new strategies on from the last. Nothing already shown is discarded.
 
 ### 4. Strategies
 
@@ -60,11 +62,13 @@ Read the five back before showing them. If two would give results a reader could
 
 ### 5. Show
 
-**Held constant.** Every brief line, in plain sentences.
+**Held constant.** Every brief line, in plain sentences. Two or three lines.
 
-**Five ways in.** Each strategy under its number, word, and chain. Then one line with the arithmetic shown: `doings, line 25325: 25325 mod 5 = 0, plus 1, strategy 1`. When the task asks for enough variations to build every strategy, that number is only where the order starts, so say "starting from" rather than "chose".
+**Five ways in.** Each strategy under its number, with its word and chain on one line above it.
 
-Then, unless `--headless` was given, stop and wait. Say: a number, go, or re-roll.
+For short work, the results follow at once, one under each strategy, and the reply ends: pick one, or say more. For long work, the reply ends: a number, more, or go. Under both, one small line: the seed, and the die with its arithmetic, `doings, line 25325: 25325 mod 5 = 0, plus 1, strategy 1`, which is what go builds.
+
+Then, unless the work is short or `--headless` was given, stop and wait.
 
 ### 6. Record, under `--log` only
 
@@ -76,7 +80,7 @@ jq -nc --arg ts "$TS" --arg seed "$SEED" --arg task "$TASK" --arg brief "$BRIEF"
 
 ### 7. Do the task and read it back
 
-Build the chosen strategy. Before presenting the result, check it in this order:
+Build the strategy chosen, or all five for short work. Before presenting a result, check it in this order:
 
 1. The brief. Run each test. A result that fails a brief line is wrong however well it follows the strategy.
 2. The strategy. State one fact from the least prominent place in the result, the second paragraph, the footer, the button, the smallest label, and say which sentence of the strategy it shows. A fact that shows a different strategy, or the plain default, is a miss.
@@ -88,9 +92,9 @@ For visual work, render before reading: `"$CHROME" --headless --disable-gpu --hi
 
 ## Rules
 
-- One seed at a time. A new inject replaces the old strategy.
+- One seed at a time. A new inject replaces the old strategy. Saying more extends the current one.
 - The scope is the deliverable named in the task. Work inside it follows the strategy; work outside it does not. When unclear, ask; under `--headless`, say you are applying it and let the user object.
 - The user's standing rules and the brief win. The strategy varies taste inside that box and never overrides it.
-- When the user asks for N variations, build N strategies, one result each, starting from the one the dice chose and continuing in order. The variety is in the strategies; five headlines from one strategy are five synonyms. Build one strategy several ways only when the user picks a number and asks for that.
+- Variations are strategies. Five headlines from one strategy are five synonyms. Build one strategy several ways only when the user picks a number and asks for that.
 - When delegating inside the scope, paste the brief and the chosen strategy from the reply into the subagent's prompt.
 - Never soften the strategy later without saying so. If the user asks for a change, apply it and keep the rest.
