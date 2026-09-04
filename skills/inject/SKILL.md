@@ -39,16 +39,13 @@ List what the user has already fixed, one line each, in their words: a length, a
 
 ### 3. Words
 
-Six numbers from the seed, six lines from the dictionary:
+Six numbers from the seed, six words from the dictionary, one line:
 
 ```bash
-mkdir -p .entropy
-[ -s .entropy/words.txt ] || grep -x '[a-z]\{4,9\}' /usr/share/dict/words > .entropy/words.txt
-N=$(wc -l < .entropy/words.txt | tr -d ' ')
-printf '%s' "$SEED" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do sed -n "$((16#$h % N + 1))p" .entropy/words.txt; done
+printf '%s' "$SEED" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do awk -v n=$((16#$h)) '/^[a-z]+$/ && length>=4 && length<=9 {a[++c]=$0} END{i=n%c+1; print i, a[i]}' /usr/share/dict/words; done
 ```
 
-The first five words are starting points. The sixth is the die: its line number modulo 5, plus 1, is the strategy it chooses when nobody else does. Get the line with `grep -nx "$WORD" .entropy/words.txt`. If the dictionary file is missing, say so and stop; do not invent words.
+Each line is a position and a word, drawn from the lowercase words of four to nine letters. The first five words are starting points. The sixth is the die: its position modulo 5, plus 1, is the strategy it chooses when nobody else does. If the dictionary file is missing, say so and stop; do not invent words.
 
 When the user says more, draw five more from the same seed with a round number appended, `printf '%s2' "$SEED"` for the second round, then `3`, and number the new strategies on from the last. Nothing already shown is discarded.
 
@@ -66,7 +63,7 @@ Read the five back before showing them. If two would give results a reader could
 
 **Five ways in.** Each strategy under its number, with its word and chain on one line above it.
 
-For short work, the results follow at once, one under each strategy, and the reply ends: pick one, or say more. For long work, the reply ends: a number, more, or go. Under both, one small line: the seed, and the die with its arithmetic, `doings, line 25325: 25325 mod 5 = 0, plus 1, strategy 1`, which is what go builds.
+For short work, the results follow at once, one under each strategy, and the reply ends: pick one, or say more. For long work, the reply ends: a number, more, or go. Under both, one small line: the seed, and the die with its arithmetic, `doings 12660: 12660 mod 5 = 0, plus 1, strategy 1`, which is what go builds.
 
 Then, unless the work is short or `--headless` was given, stop and wait.
 
