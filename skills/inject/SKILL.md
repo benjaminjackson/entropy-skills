@@ -15,7 +15,7 @@ Based on String Seed of Thought (Sakana AI): randomness enters as selection, nev
 `$ARGUMENTS` is one of:
 
 - Empty: new seed, strategies shown, then stop and wait.
-- `<task>`: new seed, strategies shown, then stop and wait for the user. The user picks a strategy by number, says go to take the one the dice chose, or says re-roll for a new seed.
+- `<task>`: new seed, strategies shown, then stop and wait for the user. The user picks a strategy by number, says go to take the one the dice chose, or says re-roll for a new seed. A task that asks for N variations takes N strategies on go, one result each.
 - `--seed <string> [task]`: use the given string. Same words come out, so the same starting points; the strategies are written fresh.
 - `--current`: do not generate. Read `.entropy/current.json` and re-state its brief and chosen strategy. If the file is missing, say so and stop.
 - `--log`: record the run in `.entropy/seeds.jsonl` and `.entropy/current.json`. Off by default. Stays on for the session.
@@ -91,6 +91,6 @@ For visual work, render before reading: `"$CHROME" --headless --disable-gpu --hi
 - One seed at a time. A new inject replaces the old strategy.
 - The scope is the deliverable named in the task. Work inside it follows the strategy; work outside it does not. When unclear, ask; under `--headless`, say you are applying it and let the user object.
 - The user's standing rules and the brief win. The strategy varies taste inside that box and never overrides it.
-- When the user asks for several variations, build the chosen strategy several ways, or build several strategies, as they say. Do not roll new words for each.
+- When the user asks for N variations, build N strategies, one result each, starting from the one the dice chose and continuing in order. The variety is in the strategies; five headlines from one strategy are five synonyms. Build one strategy several ways only when the user picks a number and asks for that.
 - When delegating inside the scope, paste the brief and the chosen strategy from the reply into the subagent's prompt.
 - Never soften the strategy later without saying so. If the user asks for a change, apply it and keep the rest.
