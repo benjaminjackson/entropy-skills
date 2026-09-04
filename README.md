@@ -64,7 +64,7 @@ Without:
 
 ![Twenty hero sections made without the skill: the same bone ground, small dark headline, two buttons, and mock task list card on every one](docs/images/without.jpg)
 
-Run it yourself with `evals/run.sh`. It takes `--model opus|sonnet|haiku`, `--runs`, `--passes`, and `--jobs`, which caps how many `claude` processes run at once. Design outputs are rendered with headless Chrome, or Playwright where Chrome is absent, so the judge sees pages, not CSS. `evals/fidelity.sh <results-dir>` then checks each rendered page against its own picks; 81 to 95% of visual picks are honored across runs; from eval 15 it also reads register and copy stance from the body text and footer, and register was honored on 20 of 20 pages.
+Run it yourself with `evals/run.sh`. It takes `--model opus|sonnet|haiku`, `--runs`, `--passes`, and `--jobs`, which caps how many `claude` processes run at once. Design outputs are rendered with headless Chrome, or Playwright where Chrome is absent, so the judge sees pages, not CSS. `evals/fidelity.sh <results-dir>` then checks each rendered page against its own picks; 81 to 99% of visual picks are honored across runs; from eval 15 it also reads register and copy stance from the body text and footer, and register was honored on 20 of 20 pages.
 
 ## How it works
 

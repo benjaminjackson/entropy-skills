@@ -26,13 +26,16 @@ grade() { # run-dir -> fidelity.json
   {
     echo "A designer rolled dice to choose creative decisions, then built a page. Here are the decisions:"
     echo; echo "$direction"; echo
+    local menus; menus=$(jq -r '.menus // empty' "$dir/.entropy/current.json" 2>/dev/null)
+    if [ -n "$menus" ]; then echo "The menus the dice chose from. Option 0 on each is the designer's own habit, which must not appear on the page unless it was the pick:"; echo; echo "$menus"; echo; fi
     if [ -s "$dir/shot.png" ]; then
       echo "The finished page is rendered at shot.png in the working directory. Open it with the Read tool and judge from what you see."
     else
       echo "No render is available. Judge from the code below."; echo; cat "$dir/output.md"
     fi
     echo "For every decision that is visible in a static screenshot (ground color, layout skeleton, type family, palette, era or reference tradition, density, ornament, and the like; skip motion and scope), say whether the page honors it. Judge register, copy stance, and conceit from the page text too, reading the second body paragraph, the button, and the footer rather than the headline, since the habit hides where the pick was not looking. Be strict: a pixel font on an ordinary two-column split does not honor 'arcade cabinet'; a page whose headline is imperative and whose body is quiet contemplative prose does not honor 'second person imperative'."
-    echo 'Reply with JSON only: {"axes":[{"axis":"<name>","pick":"<what was chosen>","match":true|false,"seen":"<what the page actually shows, a few words>"}],"notes":"<one sentence>"}'
+    echo "For each axis whose pick was not option 0, also say whether any mark of option 0 is on the page anyway, anywhere: an opener, a footer, a caption, a button. A named weekday under a conceit that is not the accounted-for day, or tracked capitals under an ornament that is not the eyebrow, count."
+    echo 'Reply with JSON only: {"axes":[{"axis":"<name>","pick":"<what was chosen>","match":true|false,"seen":"<what the page actually shows, a few words>","habit_seen":"<mark of option 0 present although not picked, or empty>"}],"notes":"<one sentence>"}'
   } | (cd "$dir" && claude -p --setting-sources "" --model "$JUDGE" --no-session-persistence --allowedTools Read) > "$dir/fidelity.json" 2>/dev/null || true
 }
 
@@ -53,7 +56,7 @@ wait
 
 python3 - "$DIR/$NAME/with" <<'PY'
 import sys,re,json,glob,os
-root=sys.argv[1]; tot=match=0; rows=[]
+root=sys.argv[1]; tot=match=0; rows=[]; leaks=[]
 for f in sorted(glob.glob(os.path.join(root,'*','fidelity.json')), key=lambda p:int(p.split(os.sep)[-2])):
     txt=open(f).read(); m=re.search(r'\{.*\}', txt, re.S)
     try: j=json.loads(m.group(0))
@@ -61,10 +64,14 @@ for f in sorted(glob.glob(os.path.join(root,'*','fidelity.json')), key=lambda p:
     ax=j.get('axes',[]); k=sum(1 for a in ax if a.get('match')); n=len(ax)
     tot+=n; match+=k
     miss=[a['axis'] for a in ax if not a.get('match')]
+    for a in ax:
+        if a.get('habit_seen'): leaks.append(f"{f.split(os.sep)[-2]} {a['axis']}: {a['habit_seen'][:80]}")
     rows.append((f.split(os.sep)[-2], f"{k}/{n}", ', '.join(miss) or '-'))
 print(f"\n{'run':<5}{'honored':<10}missed axes")
 for r in rows: print(f"{r[0]:<5}{r[1]:<10}{r[2]}")
 print(f"\nfidelity: {match}/{tot} visual picks honored = {100*match/tot:.0f}%" if tot else "\nfidelity: ?")
+print(f"habit marks under another pick: {len(leaks)}")
+for l in leaks: print('  '+l)
 mt=mo=0; bad=[]
 for f in glob.glob(os.path.join(root,'*','menus.json')):
     m=re.search(r'\{.*\}', open(f).read(), re.S)
