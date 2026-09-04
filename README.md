@@ -1,6 +1,6 @@
 # entropy
 
-A Claude Code plugin with one skill: `/entropy:inject`.
+A Claude Code plugin with two skills. `/entropy:inject` draws one random word and builds one strategy for your task from it. `/entropy:lottery` draws many words at once and hands back the strategies that sit farthest from what the model always does.
 
 Ask a model for a landing page and you get the same purple gradient every time. Ask for an opening sentence and you get the same wry present tense. Ask it to "be unique" and you get a different sameness. The model cannot act randomly. It predicts the most likely token, and "random-sounding" has a most likely token too.
 
@@ -31,7 +31,7 @@ Several, one word each:
 /entropy:inject Write a hero headline and one-sentence subhead for a paid one-hour session that teaches immigrants how the US financial system works. Headline under 8 words. No coaching, guidance, or training. Give me 5 variations.
 ```
 
-Short work, a line, a name, a paragraph, comes back in the same reply: what was held constant, the chain, the strategy, the result. Long work, a page or a module, stops after the strategy and waits for `go`. Say `more` at any point for the next word; nothing already shown is discarded.
+Short work, a line, a name, a paragraph, comes back in the same reply: what was held constant, the chain, the strategy, the result. Long work, a page or a module, stops after the strategy and waits for `go`. Say `more` at any point for the next word; nothing already shown is discarded. Visual work is rendered and looked at before it is shown, and the built page and its screenshot are left on disk for you.
 
 Flags, all optional, before the task:
 
@@ -39,7 +39,7 @@ Flags, all optional, before the task:
 - `--log`: write the run to `.entropy/seeds.jsonl` and `.entropy/current.json`. Off by default. Nothing touches disk without it.
 - `--current`: re-state the logged brief and strategy after a long conversation or a compaction. Needs a run made with `--log`.
 - `--headless`: never stop, never ask. For scripts. Turns `--log` on.
-- `--word <word>`: skip the draw and use this word. `--strategy`: stop after the strategy. Both are for the lottery below.
+- `--word <word>`: skip the seed and the draw and use this word. `--strategy`: end the reply after the chain and the strategy, even under `--headless`. Both exist so the lottery below can run one draw in a fresh context and read the strategy back.
 
 ## Lottery
 
@@ -51,7 +51,21 @@ One word gives one strategy that is not the default. It does not tell you what t
 
 Flags: `--n` words per round (24), `--rounds` (1), `--keep` (6), `--build` to render the kept strategies before the pick, `--model` and `--judge-model` (opus), `--headless`, `--seed`. It uses the Claude Code Workflow tool; every strategy file and judge verdict lands under `.entropy/lottery/<ts>/`, and every named habit is appended to `.entropy/habits.jsonl`, one line each, so the habits build up per task over time.
 
-A run with defaults is twenty-five Opus agents and about 1.2 million tokens, most of it input. On the story prompt it named twelve habits and returned six survivors that read nothing alike. Judged for variety against six plain runs of the same prompt, the six built survivors scored 6 against 2 on a design brief and 3 against 2 on a blog paragraph. Keep the strategy model the same as the one that will build; the habits found are that model's.
+A run with defaults is twenty-five Opus agents, about 1.2 million tokens, most of it input, and seven to eight minutes. Building six survivors costs another 275,000 to 350,000 tokens, and three judge passes over a set 130,000 to 155,000. On the story prompt it named twelve habits and returned six survivors that read nothing alike. Keep the strategy model the same as the one that will build; the habits found are that model's.
+
+The scores below are variety scores, 1 to 10, from one Opus judge over three shuffled passes with six items per arm. They say how far apart the six results are and nothing about how good any one of them is. Without the plugin is six plain `claude -p` runs of the same brief, no settings and no skill. With it is one lottery draw of twenty-four strategies, six survivors, built by the same model.
+
+![Six plain runs of the Ledger brief](docs/images/ledger-without.jpg)
+
+*Without the plugin, the Ledger design brief: variety 2, 2, 2.*
+
+![Six lottery survivors on the Ledger brief](docs/images/ledger-with.jpg)
+
+*With the lottery, the same brief: variety 6, 6, 6.*
+
+The judge on the plain arm saw the same page six times: cream ground, serif headline with one green word, Inter body, white rounded card with a Monday to Friday grid, and two of the headlines word for word the same across runs. On the lottery arm the pictures differ, a time-card rack, a struck-through ink ledger, one day blown up with the rest as ribbons, a lacquer sign board, client-stamped hour blocks, while the shell recurs in five of six: warm ground, serif display, copy stack on the left, seven day columns.
+
+Prose moves less. On the paragraph in `evals/prompts/prose.md` the plain arm scored 2, 2, 2 and the lottery arm 4, 3, 3. The anecdote differs and the voice does not: all six survivors are second person, past pain then a dated pivot, a flat close. The lottery's own strategy judge had named that voice as a habit, with eighteen to twenty-four of the twenty-four strategies in it. A habit nearly every strategy has leaves no survivor far enough from it to pick, so on prose the next layer needs a ban round, not a bigger draw.
 
 ## What is held constant
 
@@ -67,6 +81,6 @@ The history, with every eval and its numbers, is in `docs/history/spec-menus.md`
 
 ## Does it work
 
-The menu version was measured over seventeen eval rounds on Opus; those numbers are in the history file. The word version has been tested by hand on a headline with a brief and a story opening, on Sonnet and Opus. On the headline, five words gave five strategies a copywriter could argue over: the session as translation, as a con exposed, as freedom, as a crossing, as plain mechanics. The judged regression on the design prompt has not been run yet.
+The menu version was measured over seventeen eval rounds on Opus; those numbers are in the history file. The word version has been tested by hand on a headline with a brief and a story opening, on Sonnet and Opus. On the headline, five words gave five strategies a copywriter could argue over: the session as translation, as a con exposed, as freedom, as a crossing, as plain mechanics. Both eval prompts have since been judged with the lottery arm against a plain arm, and those variety scores are in the lottery section above. A plain `/entropy:inject` arm has not been scored against a plain arm on the Ledger brief.
 
-`evals/run.sh` runs the same prompt in two arms, with and without the plugin, and judges the sets for variety. It takes `--model opus|sonnet|haiku`, `--runs`, `--passes`, `--jobs`, and `--arms with|without|both`. `evals/fidelity.sh` was written for the menu version and does not grade this one yet.
+`evals/run.sh` runs the same prompt in two arms, with and without the plugin, and judges the sets for variety. It takes `--model opus|sonnet|haiku`, `--runs`, `--passes`, `--jobs`, and `--arms with|without|both`. `evals/judge.js` is the same judging as a Workflow script over any set of files, screenshots with their code or plain text files, which is how the lottery's built survivors were scored. `evals/fidelity.sh` was written for the menu version and does not grade this one yet.
