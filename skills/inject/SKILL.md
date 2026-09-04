@@ -84,7 +84,7 @@ Build the strategy, or one result per strategy for variations. Before presenting
 
 Rewrite until there are no misses. Do not mention the check in the output.
 
-For visual work, render before reading: `"$CHROME" --headless --disable-gpu --hide-scrollbars --window-size=1280,800 --screenshot=shot.png "file://$PWD/page.html"`, or `npx playwright screenshot --viewport-size=1280,800 "file://$PWD/page.html" shot.png`, and look at the image with the Read tool. With no renderer, say so in one line and read the code. Delete `page.html` and `shot.png` afterward unless the deliverable is the file.
+For visual work, render before reading: `"$CHROME" --headless --disable-gpu --hide-scrollbars --window-size=1280,800 --screenshot=shot.png "file://$PWD/page.html"`, or `npx playwright screenshot --viewport-size=1280,800 "file://$PWD/page.html" shot.png`, and look at the image with the Read tool. With no renderer, say so in one line and read the code. Leave the files where they are; a page the user asked for is theirs to keep, and the screenshot is one file.
 
 ## Rules
 
