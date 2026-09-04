@@ -26,10 +26,11 @@ Exactly as in `/entropy:inject` step 2: what the user has already fixed, one lin
 
 ```bash
 SEED=$(openssl rand -base64 48); TS=$(date -u +%Y%m%dT%H%M%SZ); DIR=.entropy/lottery/$TS; mkdir -p "$DIR"
-for k in $(seq 1 $(( (N*R)/6 + 2 ))); do s=$SEED; [ "$k" -gt 1 ] && s=$SEED$k; printf '%s' "$s" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do awk -v n=$((16#$h)) '/^[a-z]+$/ && length>=4 && length<=9 {a[++c]=$0} END{print a[n%c+1]}' /usr/share/dict/words; done; done | awk '!seen[$0]++' | head -n $((N*R)) > "$DIR/words.txt"
+W=$(grep -Ex '[a-z]{4,9}' /usr/share/dict/words); C=$(printf '%s\n' "$W" | wc -l | tr -d ' ')
+for k in $(seq 1 $(( (N*R)/6 + 2 ))); do s=$SEED; [ "$k" -gt 1 ] && s=$SEED$k; printf '%s' "$s" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do printf '%s\n' "$W" | sed -n "$((16#$h % C + 1))p"; done; done | perl -ne 'print unless $seen{$_}++' | head -n $((N*R)) > "$DIR/words.txt"
 ```
 
-The same draw as inject, repeated with round numbers appended to the seed, duplicates dropped. If the dictionary file is missing, say so and stop.
+The same draw as inject, repeated with round numbers appended to the seed, duplicates dropped. No dollar sign followed by a digit anywhere in the command: the skill runner replaces those with words from the arguments. If the dictionary file is missing, say so and stop.
 
 ### 3. Run
 

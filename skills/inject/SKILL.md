@@ -45,10 +45,11 @@ List what the user has already fixed, one line each, in their words: a length, a
 Six words from the seed, one line:
 
 ```bash
-printf '%s' "$SEED" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do awk -v n=$((16#$h)) '/^[a-z]+$/ && length>=4 && length<=9 {a[++c]=$0} END{i=n%c+1; print i, a[i]}' /usr/share/dict/words; done
+W=$(grep -Ex '[a-z]{4,9}' /usr/share/dict/words); C=$(printf '%s\n' "$W" | wc -l | tr -d ' ')
+printf '%s' "$SEED" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do i=$((16#$h % C + 1)); echo "$i $(printf '%s\n' "$W" | sed -n "${i}p")"; done
 ```
 
-Each line is a position and a word, drawn from the lowercase words of four to nine letters. Use the first word. For N variations, use the first N. When the user says more, take the next unused word; past the sixth, draw six more from the seed with a round number appended, `printf '%s2' "$SEED"`, then `3`. Nothing already shown is discarded. If the dictionary file is missing, say so and stop; do not invent words. Under `--word`, skip the seed and the draw and use the given word.
+Each line is a position and a word, drawn from the lowercase words of four to nine letters. No dollar sign followed by a digit anywhere in the command: the skill runner replaces those with words from the arguments. Use the first word. For N variations, use the first N. When the user says more, take the next unused word; past the sixth, draw six more from the seed with a round number appended, `printf '%s2' "$SEED"`, then `3`. Nothing already shown is discarded. If the dictionary file is missing, say so and stop; do not invent words. Under `--word`, skip the seed and the draw and use the given word.
 
 ### 4. Strategy
 
