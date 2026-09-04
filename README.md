@@ -2,11 +2,11 @@
 
 A Claude Code plugin with one skill: `/entropy:inject`.
 
-Ask a model for a landing page and you get the same purple gradient, text left, graphic right, every time. Ask it to "be unique" or "make random choices" and you get a different sameness. The model cannot act randomly. It predicts the most likely token, and "random-sounding" has a most likely token too.
+Ask a model for a landing page and you get the same purple gradient every time. Ask for an opening sentence and you get the same wry present tense. Ask it to "be unique" and you get a different sameness. The model cannot act randomly. It predicts the most likely token, and "random-sounding" has a most likely token too.
 
-The fix is to bring randomness in from outside. `/entropy:inject` runs `openssl rand -base64 48` in the shell, reads the string for patterns, and derives a creative direction from what it finds. Every run lands somewhere different because the input is different.
+The fix is to bring randomness in from outside. `/entropy:inject` runs `openssl rand -base64 48` in the shell, hashes the string into a position in the system dictionary, and hands the model a word it did not choose: "fanega", "shielding", "unrisen". The model writes a chain of three associations from the word and builds a strategy for the task from the last link. The word is the only random part. Everything after it is the model doing real work from a starting point it would never have picked.
 
-The technique is String Seed of Thought, from [Sakana AI](https://sakana.ai/).
+The technique is String Seed of Thought, from [Sakana AI](https://sakana.ai/): randomness enters as selection, never as interpretation.
 
 ## Install
 
@@ -15,66 +15,45 @@ The technique is String Seed of Thought, from [Sakana AI](https://sakana.ai/).
 /plugin install entropy@entropy-skills
 ```
 
+Needs `/usr/share/dict/words`. macOS has it. On Debian and Ubuntu it is the `wamerican` package.
+
 ## Use
 
-Set a direction, then work under it:
+One word, one strategy, one result:
 
 ```
-/entropy:inject
+/entropy:inject Write the opening sentence of a short story about a man who comes home to find his house repainted a color he did not choose.
 ```
 
-Set a direction and do the task in one shot:
+Several, one word each:
 
 ```
-/entropy:inject build me a landing page for my productivity app
+/entropy:inject Write a hero headline and one-sentence subhead for a paid one-hour session that teaches immigrants how the US financial system works. Headline under 8 words. No coaching, guidance, or training. Give me 5 variations.
 ```
 
-Replay a seed from the log, with the menus it was rolled against:
+Short work, a line, a name, a paragraph, comes back in the same reply: what was held constant, the chain, the strategy, the result. Long work, a page or a module, stops after the strategy and waits for `go`. Say `more` at any point for the next word; nothing already shown is discarded.
 
-```
-/entropy:inject --seed <string> [task]
-```
+Flags, all optional, before the task:
 
-Re-state the current direction later in a long conversation:
+- `--seed <string>`: use this string instead of a fresh one. The same words come out.
+- `--log`: write the run to `.entropy/seeds.jsonl` and `.entropy/current.json`. Off by default. Nothing touches disk without it.
+- `--current`: re-state the logged brief and strategy after a long conversation or a compaction. Needs a run made with `--log`.
+- `--headless`: never stop, never ask. For scripts. Turns `--log` on.
 
-```
-/entropy:inject --current
-```
+## What is held constant
 
-It works for anything where variety beats the default: visual design, prose, naming, code architecture. The skill reads the task, decides which decisions carry variety in that domain, and maps the seed onto those.
+Before the word is drawn, the skill writes down what the user has already fixed, in the user's words, with a test for each: a word count, a banned word to grep for, a voice file to match. That brief comes before the strategy and is checked first on the result. The word varies taste inside the brief and never overrides it, and the same goes for house style in CLAUDE.md.
+
+## Why a word
+
+The first version read the random string for patterns. Every base64 string looks the same to a model, so five seeds gave five near-identical directions. The second version had the model write menus of options on a dozen axes and hash the seed into picks. That measured well on a landing-page eval, 8.3 against a baseline of 2.0, and grew to 4,400 words of procedure. On the first real copy task with a person and a brief it produced ten honored picks and no line anyone would keep, because the decision that mattered, length, was on no menu, and because a headline built from ten independent picks is a collision, not a strategy.
+
+A dictionary word fixes both. It is far from every other word in a way no menu option is, there are a hundred thousand of them, and the model reasons from it to one coherent strategy a person can read and argue with. The chain is shown so the user can see where the idea came from. The word itself does not appear in the result.
+
+The history, with every eval and its numbers, is in `docs/history/spec-menus.md`. The current spec is `docs/SPEC.md`.
 
 ## Does it work
 
-Yes, measured. Same brief, ten runs per arm on Opus, a judge scores each set for variety from 1 to 10, three passes with the responses shuffled. The two sets also go head to head, blind, on two judge models.
+The menu version was measured over seventeen eval rounds on Opus; those numbers are in the history file. The word version has been tested by hand on a headline with a brief and a story opening, on Sonnet and Opus. On the headline, five words gave five strategies a copywriter could argue over: the session as translation, as a con exposed, as freedom, as a crossing, as plain mechanics. The judged regression on the design prompt has not been run yet.
 
-| prompt | with plugin | without | head-to-head wins |
-|---|---|---|---|
-| code architecture | 6.0 | 2.0 | 6 of 6 |
-| landing page hero | 7.7 to 9.0 (20 runs) | 2.0 | 6 of 6 |
-| app name and tagline | 7.7 | 2.0 | 6 of 6 |
-| announcement paragraph | 5.7 | 2.0 | 6 of 6 |
-
-The same brief, twenty times each, rendered and laid out as contact sheets. A hero section for a to-do app, one HTML file, nothing said about look, voice, or name.
-
-With the skill:
-
-![Twenty hero sections made with the skill: a warning card in black Times, a yellow letterpress poster, a green terminal, an orange broadside, a pink page with Sunday across it](docs/images/with.jpg)
-
-Without:
-
-![Twenty hero sections made without the skill: the same bone ground, small dark headline, two buttons, and mock task list card on every one](docs/images/without.jpg)
-
-Run it yourself with `evals/run.sh`. It takes `--model opus|sonnet|haiku`, `--runs`, `--passes`, and `--jobs`, which caps how many `claude` processes run at once. Design outputs are rendered with headless Chrome, or Playwright where Chrome is absent, so the judge sees pages, not CSS. `evals/fidelity.sh <results-dir>` then checks each rendered page against its own picks; 81 to 99% of visual picks are honored across runs; from eval 15 it also reads register and copy stance from the body text and footer, and register was honored on 20 of 20 pages.
-
-## How it works
-
-The model does not read the string for inspiration. Every random string looks the same to a model, so that lands in the same place every time. Instead, for each decision that shapes the result, the model writes a menu of 8 to 12 options that span the good work of many traditions, including the plain default. The seed and the menus are hashed together into numbers, so the numbers cannot exist before the menus do, and each number picks one option by modulo. The arithmetic is shown, so every choice is auditable. Two axes are always on the menu: the register of the piece and the frame or tradition it is built on, because those are where the model's own taste hides. Visual work adds a third, the layout skeleton, and after building the page the model renders it with headless Chrome if there is one and checks the screenshot against the picks.
-
-## Record
-
-Each inject writes to `.entropy/` in the working directory:
-
-- `seeds.jsonl`: one line per seed, with timestamp, task, and the derived direction. Append only.
-- `current.json`: the most recent seed and direction.
-
-To branch from an earlier point, open a fresh conversation in the same directory and run `/entropy:inject --seed <string>` with a seed from `seeds.jsonl`. The skill replays the menus recorded on that line, so the picks come out the same. A seed alone does not reproduce a direction; the menus do. To branch in another directory, copy the whole log line into that directory's `seeds.jsonl` first.
+`evals/run.sh` runs the same prompt in two arms, with and without the plugin, and judges the sets for variety. It takes `--model opus|sonnet|haiku`, `--runs`, `--passes`, `--jobs`, and `--arms with|without|both`. `evals/fidelity.sh` was written for the menu version and does not grade this one yet.
