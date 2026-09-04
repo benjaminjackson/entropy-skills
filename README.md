@@ -53,19 +53,23 @@ Flags: `--n` words per round (24), `--rounds` (1), `--keep` (6), `--build` to re
 
 A run with defaults is twenty-five Opus agents, about 1.2 million tokens, most of it input, and seven to eight minutes. Building six survivors costs another 275,000 to 350,000 tokens, and three judge passes over a set 130,000 to 155,000. On the story prompt it named twelve habits and returned six survivors that read nothing alike. Keep the strategy model the same as the one that will build; the habits found are that model's.
 
-The scores below are variety scores, 1 to 10, from one Opus judge over three shuffled passes with six items per arm. They say how far apart the six results are and nothing about how good any one of them is. Without the plugin is six plain `claude -p` runs of the same brief, no settings and no skill. With it is one lottery draw of twenty-four strategies, six survivors, built by the same model.
+The scores below are variety scores, 1 to 10, from one Opus judge over three shuffled passes with six items per arm. They say how far apart the six results are and nothing about how good any one of them is. Without the plugin is six plain `claude -p` runs of the same brief, no settings and no skill. Inject is six runs of `/entropy:inject --headless`, one word and one strategy each, in six separate contexts. The lottery is one draw of twenty-four strategies, six survivors, built by the same model.
 
 ![Six plain runs of the Ledger brief](docs/images/ledger-without.jpg)
 
 *Without the plugin, the Ledger design brief: variety 2, 2, 2.*
 
+![Six inject runs of the Ledger brief](docs/images/ledger-inject.jpg)
+
+*With `/entropy:inject`, the same brief: variety 4, 4, 4.*
+
 ![Six lottery survivors on the Ledger brief](docs/images/ledger-with.jpg)
 
 *With the lottery, the same brief: variety 6, 6, 6.*
 
-The judge on the plain arm saw the same page six times: cream ground, serif headline with one green word, Inter body, white rounded card with a Monday to Friday grid, and two of the headlines word for word the same across runs. On the lottery arm the pictures differ, a time-card rack, a struck-through ink ledger, one day blown up with the rest as ribbons, a lacquer sign board, client-stamped hour blocks, while the shell recurs in five of six: warm ground, serif display, copy stack on the left, seven day columns.
+The judge on the plain arm saw the same page six times: cream ground, serif headline with one green word, Inter body, white rounded card with a Monday to Friday grid, and two of the headlines word for word the same across runs. On the inject arm the pictures differ, an hour-block heat map, a signed-variance table, arrow bars against a planned tick, columns against a capacity ceiling, while five of six keep a cream page with one rust accent, copy on the left, a boxed week view on the right, and the last phrase of the headline set in the accent colour. On the lottery arm the pictures differ, a time-card rack, a struck-through ink ledger, one day blown up with the rest as ribbons, a lacquer sign board, client-stamped hour blocks, while the shell recurs in five of six: warm ground, serif display, copy stack on the left, seven day columns.
 
-Prose moves less. On the paragraph in `evals/prompts/prose.md` the plain arm scored 2, 2, 2 and the lottery arm 4, 3, 3. The anecdote differs and the voice does not: all six survivors are second person, past pain then a dated pivot, a flat close. The lottery's own strategy judge had named that voice as a habit, with eighteen to twenty-four of the twenty-four strategies in it. A habit nearly every strategy has leaves no survivor far enough from it to pick, so on prose the next layer needs a ban round, not a bigger draw.
+Prose moves less. On the paragraph in `evals/prompts/prose.md` the plain arm scored 2, 2, 2, the inject arm 2, 2, 2, and the lottery arm 4, 3, 3. The inject paragraphs run the same script as the plain ones: second person, a list lost between laptop and phone, a pivot on starting today, three negations, the list waiting for you; one word did not move it. The anecdote differs and the voice does not: all six survivors are second person, past pain then a dated pivot, a flat close. The lottery's own strategy judge had named that voice as a habit, with eighteen to twenty-four of the twenty-four strategies in it. A habit nearly every strategy has leaves no survivor far enough from it to pick, so on prose the next layer needs a ban round, not a bigger draw.
 
 ## What is held constant
 
@@ -81,6 +85,6 @@ The history, with every eval and its numbers, is in `docs/history/spec-menus.md`
 
 ## Does it work
 
-The menu version was measured over seventeen eval rounds on Opus; those numbers are in the history file. The word version has been tested by hand on a headline with a brief and a story opening, on Sonnet and Opus. On the headline, five words gave five strategies a copywriter could argue over: the session as translation, as a con exposed, as freedom, as a crossing, as plain mechanics. Both eval prompts have since been judged with the lottery arm against a plain arm, and those variety scores are in the lottery section above. A plain `/entropy:inject` arm has not been scored against a plain arm on the Ledger brief.
+The menu version was measured over seventeen eval rounds on Opus; those numbers are in the history file. The word version has been tested by hand on a headline with a brief and a story opening, on Sonnet and Opus. On the headline, five words gave five strategies a copywriter could argue over: the session as translation, as a con exposed, as freedom, as a crossing, as plain mechanics. Both eval prompts have since been judged with the lottery arm against a plain arm, and those variety scores are in the lottery section above. An inject arm, one `/entropy:inject --headless` run per item, scored 4, 4, 4 on the Ledger brief and 2, 2, 2 on the paragraph against the same plain arm.
 
 `evals/run.sh` runs the same prompt in two arms, with and without the plugin, and judges the sets for variety. It takes `--model opus|sonnet|haiku`, `--runs`, `--passes`, `--jobs`, and `--arms with|without|both`. `evals/judge.js` is the same judging as a Workflow script over any set of files, screenshots with their code or plain text files, which is how the lottery's built survivors were scored. `evals/fidelity.sh` was written for the menu version and does not grade this one yet.
