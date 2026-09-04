@@ -52,11 +52,14 @@ Under `--seed` with a seed found in the log, do not write menus. Put the recorde
 
 ```bash
 mkdir -p .entropy && grep -F "\"seed\":\"$SEED\"" .entropy/seeds.jsonl | head -1 | jq -j .menus > .entropy/menus.txt
+grep -F "\"seed\":\"$SEED\"" .entropy/seeds.jsonl | head -1 | jq -j .sketch > .entropy/sketch.txt
 ```
 
-Otherwise, for each axis from step 2, write a numbered menu of 8 to 12 options, numbered from 0. A menu written from habit is the model's taste with a die attached, so two steps before listing:
+Otherwise, first write the habit down by doing it, not by naming it. A model cannot report its habit; it can only perform it. In ten short lines, sketch what you would build for this task if asked for something unusual and given no seed, one line each: the name, the headline, the opening line of copy, the device the copy uses, the ground color, the small type, the image, the surface, what the reader meets first, the frame. Write the lines to `.entropy/sketch.txt` with a heredoc. That file is the habit for this task.
 
-1. Name the habit first. Before listing anything, write what you would do on this axis with no seed. That is option 0, and it gets exactly one slot.
+Then, for each axis from step 2, write a numbered menu of 8 to 12 options, numbered from 0. A menu written from habit is the model's taste with a die attached, so two steps before listing:
+
+1. Option 0 is what the sketch shows on this axis, in the sketch's own words. It gets exactly one slot.
 2. Read the menu back before hashing. For every pair of options, ask whether a reader could tell them apart in the result. If not, they are one option; replace one of them.
 
 The menu must span the whole space, not the neighborhood you would pick from yourself:
@@ -109,13 +112,13 @@ Create `.entropy/` in the working directory if it does not exist. Then:
 Append one line to `.entropy/seeds.jsonl`:
 
 ```json
-{"ts":"<ISO 8601>","seed":"<seed>","task":"<task or empty>","scope":"<scope line>","direction":"<direction list as one string>","menus":"<the contents of .entropy/menus.txt>","from":"<ts of the log line replayed, or empty>"}
+{"ts":"<ISO 8601>","seed":"<seed>","task":"<task or empty>","scope":"<scope line>","direction":"<direction list as one string>","menus":"<the contents of .entropy/menus.txt>","sketch":"<the contents of .entropy/sketch.txt>","from":"<ts of the log line replayed, or empty>"}
 ```
 
 `menus` is the file the hash read, byte for byte, so a replay hashes the same input. Do not retype it; take it from the file:
 
 ```bash
-jq -nc --arg ts "$TS" --arg seed "$SEED" --arg task "$TASK" --arg scope "$SCOPE" --arg dir "$DIRECTION" --arg from "$FROM" --rawfile menus .entropy/menus.txt '{ts:$ts, seed:$seed, task:$task, scope:$scope, direction:$dir, menus:$menus, from:$from}' >> .entropy/seeds.jsonl
+jq -nc --arg ts "$TS" --arg seed "$SEED" --arg task "$TASK" --arg scope "$SCOPE" --arg dir "$DIRECTION" --arg from "$FROM" --rawfile menus .entropy/menus.txt --rawfile sketch .entropy/sketch.txt '{ts:$ts, seed:$seed, task:$task, scope:$scope, direction:$dir, menus:$menus, sketch:$sketch, from:$from}' >> .entropy/seeds.jsonl
 ```
 
 `$FROM` is the `ts` of the log line replayed, or empty.
@@ -148,7 +151,7 @@ With a screenshot, ImageMagick gives the ground color without guessing, if prese
 magick shot.png -format '%[pixel:p{0,0}]' info:    # or: convert shot.png -format '%[pixel:p{0,0}]' info:
 ```
 
-From the image, or from the code if nothing rendered, state one fact per axis, read from the least prominent instance of what that axis governs, since that is where the habit goes: register from the second body paragraph and the footer, not the headline; ornament from the folio, a caption, or a label; surface from the button and the smallest panel; skeleton from the whole frame at arm's length; imagery from every picture, icons included; copy stance from the button and the small print; conceit from the last paragraph; the ground color from a corner pixel. State each fact in the words a reader would use, then compare it to the pick, and check the territory for any mark slot 0 of that menu names. A fact that reads as a different option than the one picked, or a mark of the habit under another pick, is a miss; rewrite until it does not. A pixel font on a two-column bone-paper split is not an arcade cabinet. Delete `page.html` and `shot.png` afterward unless the deliverable is the file itself. If no task was given, stop and say: the direction is set, say go, or run `/entropy:inject` again for a new seed.
+From the image, or from the code if nothing rendered, state one fact per axis, read from the least prominent instance of what that axis governs, since that is where the habit goes: register from the second body paragraph and the footer, not the headline; ornament from the folio, a caption, or a label; surface from the button and the smallest panel; skeleton from the whole frame at arm's length; imagery from every picture, icons included; copy stance from the button and the small print; conceit from the last paragraph; the ground color from a corner pixel. State each fact in the words a reader would use, then compare it to the pick, and check the territory for any mark slot 0 of that menu names. Then take the ten most specific words and phrases in `.entropy/sketch.txt`, names, numbers, weekdays, objects, materials, and search the page for each with `grep -ci`. A hit on an axis whose pick was not slot 0 is a miss, whatever the pick is called. A fact that reads as a different option than the one picked, or a mark of the habit under another pick, is a miss; rewrite until it does not. A pixel font on a two-column bone-paper split is not an arcade cabinet. Delete `page.html` and `shot.png` afterward unless the deliverable is the file itself. If no task was given, stop and say: the direction is set, say go, or run `/entropy:inject` again for a new seed.
 
 ## Rules
 
