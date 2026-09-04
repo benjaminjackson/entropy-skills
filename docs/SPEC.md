@@ -69,6 +69,8 @@ The plugin must work for any task where variety beats the default: visual design
 
 **Twenty-four is enough to read the field.** The first run at the default size, on the story prompt with no brief, named twelve habits with three or more members; the top three (the man's feelings kept out, the man kept outdoors, the color named flat) each covered eleven or twelve of twenty-four. Six survivors scored seven to nine, and each was the only strategy taking its stance: the wife as the painter, the house molted, thanks spoken before the shock, an observation form, a gift that becomes a debt, a deed. Two were dropped for the brief because their strategy risked a sentence with no repaint in it. The judge's habit counts matched the files on every survivor checked by hand.
 
+**The lottery's pick scores 8 on the design prompt.** Same prompt as `evals/run.sh`, 24 words, six survivors built by the same model, screenshots judged three times with the run.sh wording (`evals/judge-visual.js`): 8, 8, 8. Words alone scored 5.3 over five unselected runs; the menu version's best was 8.3. The judge named the shared skeleton every time, a tracked-caps wordmark over one big sentence and one button with no picture of the product, which is the next layer under the twenty-three-of-twenty-four physical-object conceit the strategy judge found. Two of the six pages had render faults, a headline past the fold and a stray band under the panel, which the build agents' read-back did not catch.
+
 **Same model for strategies and builds.** Cheaper strategy agents would give the cheaper model's atlas. There is nothing to save at a hundred tokens each.
 
 ## What the eval must show
