@@ -65,7 +65,15 @@ When the user asks for several variations, roll once. The variations differ on o
 
 ### 5. Show
 
-Print the seed, the brief, the menus in full, every option of every axis, not the file name, and the direction: one line per axis with the option, its index, and the arithmetic, then one line stating the scope, the deliverable the task named. Do not put the seed into the deliverable. Then, unless `--headless` was given, stop and wait. Say: go, re-roll, or drop an axis. The menus are shown so a bad option can be caught before it is built.
+Lead with two short paragraphs in plain words, the way you would tell a colleague across a desk.
+
+**Held constant.** What the result will keep no matter what the dice said: every line of the brief, every axis dropped because the brief fixed it, and anything the task itself settles. Plain sentences: "Under eight words, with a verb. No coaching, guidance, or training. The voice is a peer who has been through it. Five versions."
+
+**Will vary.** What the dice chose, as one sentence per axis describing the result, not the axis: "The same phrase opens every line. Each headline is one long sentence. The words are the kind people use at a kitchen table, with the real names of the money things." For several variations, say which one thing changes between them.
+
+Under those, for the record: the seed, the scope, and one line per axis with the option, its index, and the arithmetic. Then the menus in full, every option of every axis, so a bad option can be caught before it is built. Do not put the seed into the deliverable.
+
+Then, unless `--headless` was given, stop and wait. Say: go, re-roll, or drop an axis.
 
 ### 6. Record
 
