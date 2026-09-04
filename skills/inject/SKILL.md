@@ -53,7 +53,7 @@ When the user says more, draw five more from the same seed with a round number a
 
 For each of the five words, write a chain of three hops, one line each: the word, what it brings to mind, what that brings to mind, what that brings to mind. Then, from the third hop only, a strategy for the task: three or four plain sentences saying what the result would be, the way you would tell a colleague across a desk. The strategy obeys every brief line. It does not obey your taste. If the third hop is a bad fit for the task, the strategy is still built from it; a bad fit made to work is the point. If you do not know the word, the first hop is what it looks or sounds like.
 
-Write all five to `.entropy/strategies.txt` with a heredoc, numbered 1 to 5, each with its word and chain.
+Under `--log` only, write all five to `.entropy/strategies.txt` with a heredoc after `mkdir -p .entropy`, numbered 1 to 5, each with its word and chain. Otherwise no file is written.
 
 Read the five back before showing them. If two would give results a reader could not tell apart, the later one is rewritten from its own third hop until they differ.
 
