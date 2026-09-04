@@ -6,7 +6,7 @@ argument-hint: "[--log] [--headless] [--seed <string>] [task] | --current"
 
 # Entropy: inject
 
-A model cannot act randomly. Asked for "something unique", it predicts tokens that sound random and lands on the same purple gradient every time. Real variety has to come from outside the model. This skill pulls a random string from the shell, turns it into words from the dictionary, and makes the model reason from each word to a strategy for the task.
+A model cannot act randomly. Asked for "something unique", it predicts tokens that sound random and lands on the same purple gradient every time. Real variety has to come from outside the model. This skill pulls a random string from the shell, turns it into a word from the dictionary, and makes the model reason from that word to a strategy for the task.
 
 Based on String Seed of Thought (Sakana AI): randomness enters as selection, never as interpretation. A model reading a random string sees the same thing in every string. A model reading the word "vespers" does not.
 
@@ -14,12 +14,13 @@ Based on String Seed of Thought (Sakana AI): randomness enters as selection, nev
 
 `$ARGUMENTS` is one of:
 
-- Empty: new seed, five strategies shown, then stop and wait.
-- `<task>`: new seed, five strategies. For short work, a line, a name, a paragraph, a function, all five are built in the same reply, one result each. For long work, a page, a module, a document, stop after the strategies and wait: the user picks a number, says more, or says go and the die chooses.
-- `--seed <string> [task]`: use the given string. The same words come out, so the same starting points; the strategies are written fresh.
-- `--current`: do not generate. Read `.entropy/current.json` and re-state its brief and chosen strategy. If the file is missing, say so and stop.
+- Empty: new seed, one strategy shown, then stop and wait.
+- `<task>`: new seed, one strategy, one result. For short work, a line, a name, a paragraph, a function, the result comes in the same reply. For long work, a page, a module, a document, stop after the strategy and wait: the user says go, or more.
+- `<task>` asking for N variations: N words, N strategies, N results, one each.
+- `--seed <string> [task]`: use the given string. The same words come out, so the same starting points; the strategy is written fresh.
+- `--current`: do not generate. Read `.entropy/current.json` and re-state its brief and strategy. If the file is missing, say so and stop.
 - `--log`: record the run in `.entropy/seeds.jsonl` and `.entropy/current.json`. Off by default. Stays on for the session.
-- `--headless`: never stop and never ask. For long work, build the strategy the die chose in the same reply. Turns `--log` on. Stays on for the session.
+- `--headless`: never stop and never ask. Build in the same reply. Turns `--log` on. Stays on for the session.
 
 Flags come first. Text after the flags is the task.
 
@@ -39,49 +40,47 @@ List what the user has already fixed, one line each, in their words: a length, a
 
 ### 3. Words
 
-Six numbers from the seed, six words from the dictionary, one line:
+Six words from the seed, one line:
 
 ```bash
 printf '%s' "$SEED" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do awk -v n=$((16#$h)) '/^[a-z]+$/ && length>=4 && length<=9 {a[++c]=$0} END{i=n%c+1; print i, a[i]}' /usr/share/dict/words; done
 ```
 
-Each line is a position and a word, drawn from the lowercase words of four to nine letters. The first five words are starting points. The sixth is the die: its position modulo 5, plus 1, is the strategy it chooses when nobody else does. If the dictionary file is missing, say so and stop; do not invent words.
+Each line is a position and a word, drawn from the lowercase words of four to nine letters. Use the first word. For N variations, use the first N. When the user says more, take the next unused word; past the sixth, draw six more from the seed with a round number appended, `printf '%s2' "$SEED"`, then `3`. Nothing already shown is discarded. If the dictionary file is missing, say so and stop; do not invent words.
 
-When the user says more, draw five more from the same seed with a round number appended, `printf '%s2' "$SEED"` for the second round, then `3`, and number the new strategies on from the last. Nothing already shown is discarded.
+### 4. Strategy
 
-### 4. Strategies
+From the word, write a chain of three hops, one line: the word, what it brings to mind, what that brings to mind, what that brings to mind. Then, from the third hop only, a strategy for the task: three or four plain sentences saying what the result would be, the way you would tell a colleague across a desk. The strategy obeys every brief line. It does not obey your taste. If the third hop is a bad fit for the task, the strategy is still built from it; a bad fit made to work is the point. If you do not know the word, the first hop is what it looks or sounds like.
 
-For each of the five words, write a chain of three hops, one line each: the word, what it brings to mind, what that brings to mind, what that brings to mind. Then, from the third hop only, a strategy for the task: three or four plain sentences saying what the result would be, the way you would tell a colleague across a desk. The strategy obeys every brief line. It does not obey your taste. If the third hop is a bad fit for the task, the strategy is still built from it; a bad fit made to work is the point. If you do not know the word, the first hop is what it looks or sounds like.
+For several words, one chain and one strategy each, and read them back before showing them: if two would give results a reader could not tell apart, the later one is rewritten from its own third hop until they differ.
 
-Under `--log` only, write all five to `.entropy/strategies.txt` with a heredoc after `mkdir -p .entropy`, numbered 1 to 5, each with its word and chain. Otherwise no file is written.
-
-Read the five back before showing them. If two would give results a reader could not tell apart, the later one is rewritten from its own third hop until they differ.
+Under `--log` only, write the strategies to `.entropy/strategies.txt` with a heredoc after `mkdir -p .entropy`, numbered, each with its word and chain. Otherwise no file is written.
 
 ### 5. Show
 
 **Held constant.** Every brief line, in plain sentences. Two or three lines.
 
-**Five ways in.** Each strategy under its number, with its word and chain on one line above it.
+**The way in.** The chain on one line, the strategy under it. For several, each under its number.
 
-For short work, the results follow at once, one under each strategy, and the reply ends: pick one, or say more. For long work, the reply ends: a number, more, or go. Under both, one small line: the seed, and the die with its arithmetic, `doings 12660: 12660 mod 5 = 0, plus 1, strategy 1`, which is what go builds.
+For short work, the result follows at once, under the strategy, and the reply ends: keep it, or say more. For long work, the reply ends: go, or more. Under both, one small line with the seed.
 
 Then, unless the work is short or `--headless` was given, stop and wait.
 
 ### 6. Record, under `--log` only
 
 ```bash
-jq -nc --arg ts "$TS" --arg seed "$SEED" --arg task "$TASK" --arg brief "$BRIEF" --arg pick "$PICK" --rawfile strategies .entropy/strategies.txt '{ts:$ts, seed:$seed, task:$task, brief:$brief, pick:$pick, strategies:$strategies}' >> .entropy/seeds.jsonl
+jq -nc --arg ts "$TS" --arg seed "$SEED" --arg task "$TASK" --arg brief "$BRIEF" --arg word "$WORD" --rawfile strategies .entropy/strategies.txt '{ts:$ts, seed:$seed, task:$task, brief:$brief, word:$word, strategies:$strategies}' >> .entropy/seeds.jsonl
 ```
 
-`$PICK` is the number taken. Write `.entropy/current.json` with the same object.
+Write `.entropy/current.json` with the same object.
 
 ### 7. Do the task and read it back
 
-Build the strategy chosen, or all five for short work. Before presenting a result, check it in this order:
+Build the strategy, or one result per strategy for variations. Before presenting a result, check it in this order:
 
 1. The brief. Run each test. A result that fails a brief line is wrong however well it follows the strategy.
 2. The strategy. State one fact from the least prominent place in the result, the second paragraph, the footer, the button, the smallest label, and say which sentence of the strategy it shows. A fact that shows a different strategy, or the plain default, is a miss.
-3. The other four. Search the result for the most specific words of the strategies not taken. A hit is a miss.
+3. The chain. The word and its hops are reasoning, not decoration. Search the result for them. A hit is a miss unless the strategy itself put it there.
 
 Rewrite until there are no misses. Do not mention the check in the output.
 
@@ -92,6 +91,6 @@ For visual work, render before reading: `"$CHROME" --headless --disable-gpu --hi
 - One seed at a time. A new inject replaces the old strategy. Saying more extends the current one.
 - The scope is the deliverable named in the task. Work inside it follows the strategy; work outside it does not. When unclear, ask; under `--headless`, say you are applying it and let the user object.
 - The user's standing rules and the brief win. The strategy varies taste inside that box and never overrides it.
-- Variations are strategies. Five headlines from one strategy are five synonyms. Build one strategy several ways only when the user picks a number and asks for that.
-- When delegating inside the scope, paste the brief and the chosen strategy from the reply into the subagent's prompt.
+- Variations are strategies, one word each. Five results from one strategy are five synonyms. Build one strategy several ways only when the user asks for that.
+- When delegating inside the scope, paste the brief and the strategy from the reply into the subagent's prompt.
 - Never soften the strategy later without saying so. If the user asks for a change, apply it and keep the rest.
