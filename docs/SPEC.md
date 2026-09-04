@@ -67,6 +67,8 @@ The plugin must work for any task where variety beats the default: visual design
 
 **Survivors come from volume and distance, not from bans.** Two six-word runs on the story prompt, one with positive bans (give the man the active verb, put in a voice, put in an outburst) and one with negative bans (do not write him as passive, never withhold his alarm, do not name the color flat). Round two converged both times: six of six first person or six of six scraping and cursing, four of six with the house key in hand. Forbid the top habit and the whole field takes the nearest exit together, the way cream gave way to Swiss white on the design prompt. What held both times was the distance ranking: four survivors a reader would call far apart, all on brief. So the default is one round of many draws, and a second round is a map of the model's next layer.
 
+**Twenty-four is enough to read the field.** The first run at the default size, on the story prompt with no brief, named twelve habits with three or more members; the top three (the man's feelings kept out, the man kept outdoors, the color named flat) each covered eleven or twelve of twenty-four. Six survivors scored seven to nine, and each was the only strategy taking its stance: the wife as the painter, the house molted, thanks spoken before the shock, an observation form, a gift that becomes a debt, a deed. Two were dropped for the brief because their strategy risked a sentence with no repaint in it. The judge's habit counts matched the files on every survivor checked by hand.
+
 **Same model for strategies and builds.** Cheaper strategy agents would give the cheaper model's atlas. There is nothing to save at a hundred tokens each.
 
 ## What the eval must show
