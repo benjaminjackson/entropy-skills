@@ -48,7 +48,7 @@ N=$(wc -l < .entropy/words.txt | tr -d ' ')
 printf '%s' "$SEED" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do sed -n "$((16#$h % N + 1))p" .entropy/words.txt; done
 ```
 
-The first five words are starting points. The sixth is the tiebreaker: its line number modulo 5 names which strategy the dice chose, 0 for the first. If the dictionary file is missing, say so and stop; do not invent words.
+The first five words are starting points. The sixth is the die: its line number modulo 5, plus 1, is the number of the strategy the dice chose. Get the line with `grep -nx "$WORD" .entropy/words.txt`. If the dictionary file is missing, say so and stop; do not invent words.
 
 ### 4. Strategies
 
@@ -62,7 +62,7 @@ Read the five back before showing them. If two would give results a reader could
 
 **Held constant.** Every brief line, in plain sentences.
 
-**Five ways in.** Each strategy under its number, word, and chain. Then one line: which the dice chose.
+**Five ways in.** Each strategy under its number, word, and chain. Then one line with the arithmetic shown: `doings, line 25325: 25325 mod 5 = 0, plus 1, strategy 1`. When the task asks for enough variations to build every strategy, that number is only where the order starts, so say "starting from" rather than "chose".
 
 Then, unless `--headless` was given, stop and wait. Say: a number, go, or re-roll.
 
