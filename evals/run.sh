@@ -1,12 +1,13 @@
 #!/bin/bash
 # Runs each prompt N times with and without the plugin, then asks one judge per arm
 # how varied the set is. Prints a score table. Usage:
-#   evals/run.sh [--model opus|sonnet|haiku] [--runs N] [--passes N] [--jobs N] [--judge-model M] [--judge-model-2 M] [prompt-file ...]
+#   evals/run.sh [--model opus|sonnet|haiku] [--runs N] [--passes N] [--jobs N] [--arms with|without|both] [--judge-model M] [--judge-model-2 M] [prompt-file ...]
 # --jobs caps how many claude processes run at once (default 6), so a 40-run eval does not take the whole machine.
+# --arms with runs and judges the plugin arm only, no baseline and no head-to-head, for cheap comparisons between skill versions.
 # Each arm is scored PASSES times with responses shuffled, and both arms go head to head, blind, on two judge models.
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-MODEL=opus; RUNS=5; PASSES=3; JOBS=6; JUDGE=opus; JUDGE2=sonnet; PROMPTS=()
+MODEL=opus; RUNS=5; PASSES=3; JOBS=6; ARMS="with without"; JUDGE=opus; JUDGE2=sonnet; PROMPTS=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --model) MODEL=$2; shift 2;;
@@ -15,6 +16,7 @@ while [ $# -gt 0 ]; do
     --judge-model-2) JUDGE2=$2; shift 2;;
     --passes) PASSES=$2; shift 2;;
     --jobs) JOBS=$2; shift 2;;
+    --arms) case "$2" in both) ARMS="with without";; with|without) ARMS=$2;; *) echo "arms must be with, without, or both" >&2; exit 1;; esac; shift 2;;
     *) PROMPTS+=("$1"); shift;;
   esac
 done
@@ -39,7 +41,7 @@ run_one() { # arm prompt-file index
 }
 
 for file in "${PROMPTS[@]}"; do
-  for arm in with without; do
+  for arm in $ARMS; do
     for i in $(seq 1 "$RUNS"); do throttle; run_one "$arm" "$file" "$i" & done
   done
 done
@@ -59,7 +61,7 @@ render() { # dir -> writes dir/page.html and dir/shot.png when the output holds 
     npx --no-install playwright screenshot --viewport-size=1280,800 "file://$dir/page.html" "$dir/shot.png" >/dev/null 2>&1 || true
   fi
 }
-for file in "${PROMPTS[@]}"; do name=$(basename "$file" .md); for arm in with without; do for i in $(seq 1 "$RUNS"); do render "$OUT/$name/$arm/$i"; done; done; done
+for file in "${PROMPTS[@]}"; do name=$(basename "$file" .md); for arm in $ARMS; do for i in $(seq 1 "$RUNS"); do render "$OUT/$name/$arm/$i"; done; done; done
 
 shots_note() { # name arm -> instruction line listing screenshots, if any rendered
   local name=$1 arm=$2 list=""
@@ -103,8 +105,8 @@ head_to_head() { # prompt-file pass judge-model -> writes h2h-<model>-<pass>.jso
 
 for file in "${PROMPTS[@]}"; do
   for pass in $(seq 1 "$PASSES"); do
-    for arm in with without; do throttle; judge_set "$file" "$arm" "$pass" & done
-    for jm in "$JUDGE" "$JUDGE2"; do throttle; head_to_head "$file" "$pass" "$jm" & done
+    for arm in $ARMS; do throttle; judge_set "$file" "$arm" "$pass" & done
+    [ "$ARMS" = "with without" ] && for jm in "$JUDGE" "$JUDGE2"; do throttle; head_to_head "$file" "$pass" "$jm" & done
   done
 done
 wait
@@ -130,6 +132,11 @@ h2h_wins() { # name judge-model -> "wins/passes"
   echo "$wins/$PASSES"
 }
 
+if [ "$ARMS" != "with without" ]; then
+  printf '\n%-8s %-14s\n' prompt "$ARMS"
+  for file in "${PROMPTS[@]}"; do name=$(basename "$file" .md); printf '%-8s %-14s\n' "$name" "$(stats "$OUT/$name"/$ARMS/judge-*.json)"; done
+  echo; echo "details: $OUT"; exit 0
+fi
 printf '\n%-8s %-14s %-14s %-12s %-12s\n' prompt "with" "without" "h2h:$JUDGE" "h2h:$JUDGE2"
 for file in "${PROMPTS[@]}"; do
   name=$(basename "$file" .md)
