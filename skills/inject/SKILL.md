@@ -6,22 +6,20 @@ argument-hint: "[--log] [--headless] [--seed <string>] [task] | --current"
 
 # Entropy: inject
 
-A model cannot act randomly. Asked for "something unique", it predicts tokens that sound random and lands on the same purple gradient every time. Real variety has to come from outside the model. This skill pulls a random string from the shell, writes menus of options, and lets arithmetic on the string choose.
+A model cannot act randomly. Asked for "something unique", it predicts tokens that sound random and lands on the same purple gradient every time. Real variety has to come from outside the model. This skill pulls a random string from the shell, turns it into words from the dictionary, and makes the model reason from each word to a strategy for the task.
 
-Based on String Seed of Thought (Sakana AI).
-
-This is a tool for widening the field: a first draft, a whole page, several distinct takes. When the user is narrowing toward one line and has already written a candidate, say so in one sentence and offer a roll on one axis only.
+Based on String Seed of Thought (Sakana AI): randomness enters as selection, never as interpretation. A model reading a random string sees the same thing in every string. A model reading the word "vespers" does not.
 
 ## Arguments
 
 `$ARGUMENTS` is one of:
 
-- Empty: new seed, direction shown, then stop and wait.
-- `<task>`: new seed, direction shown, then stop and wait for the user before doing the task. The user says go, asks for a re-roll, which is a new seed, or drops an axis, and the rest holds. Any change the user asks for is applied and the rest kept.
-- `--seed <string> [task]`: use the given string. If a line in `.entropy/seeds.jsonl` has this exact seed, put its recorded sketch and menus back on disk and skip to the hash, so the picks come out the same. If not, proceed as for a new seed and say the result will not match any earlier run.
-- `--current`: do not generate. Read `.entropy/current.json` and re-state its seed, brief, and direction so the rest of the conversation follows them. If the file is missing, say so and stop.
-- `--log`: record the run in `.entropy/seeds.jsonl` and `.entropy/current.json` so it can be replayed with `--seed` or restated with `--current`. Off by default. Stays on for the session.
-- `--headless`: combine with any of the above. Do not stop after the direction; do the task in the same reply. Never ask questions; decide and state the decision. Turns `--log` on. Stays on for the session.
+- Empty: new seed, strategies shown, then stop and wait.
+- `<task>`: new seed, strategies shown, then stop and wait for the user. The user picks a strategy by number, says go to take the one the dice chose, or says re-roll for a new seed.
+- `--seed <string> [task]`: use the given string. Same words come out, so the same starting points; the strategies are written fresh.
+- `--current`: do not generate. Read `.entropy/current.json` and re-state its brief and chosen strategy. If the file is missing, say so and stop.
+- `--log`: record the run in `.entropy/seeds.jsonl` and `.entropy/current.json`. Off by default. Stays on for the session.
+- `--headless`: do not stop; take the strategy the dice chose and do the task in the same reply. Never ask questions. Turns `--log` on. Stays on for the session.
 
 Flags come first. Text after the flags is the task.
 
@@ -33,79 +31,66 @@ Flags come first. Text after the flags is the task.
 openssl rand -base64 48
 ```
 
-Do not invent, edit, or shorten it. Do nothing else with it yet. The hash takes the menus as input, so it cannot run until they exist.
+Do not invent, edit, or shorten it.
 
 ### 2. Brief
 
-List what the user has already fixed, one line each, in their words: a length, a required word, a banned word, a voice or brand file, an example to match. Give each line a test that can be run on the result: a word count, a grep, a file to compare against. The brief is not an axis. The seed never touches it. If nothing is fixed, write `brief: none`.
+List what the user has already fixed, one line each, in their words: a length, a required word, a banned word, a voice or brand file, an example to match. Give each line a test that can be run on the result: a word count, a grep, a file to compare against. If nothing is fixed, write `brief: none`. The house style in CLAUDE.md and any active skill count as brief lines whether or not the user repeated them.
 
-### 3. Sketch the habit
+### 3. Words
 
-A model cannot report its habit; it can only perform it. Write what you would build for this task if asked for something unusual and given no seed, one short line per decision that shapes the result. As many decisions as the result has room to show, and no more: three for a line or a name, six for a paragraph or a function, ten for a page or a module. Ten picks on eight words is a line nobody would write. For a page: the name, the headline, the opening line, the device the copy uses, the ground color, the small type, the image, the surface, what the reader meets first, the frame. For a headline: the speaker, the device, the sentence shape. For prose: the length, the opening move, the sentence shape, the speaker, the device, what is left out. For code: the module boundaries, the naming scheme, the data flow. Then the same decisions again: what you would build to get away from all of that. Then once more: what you would build to get away from both. Three layers, each as fixed a habit as the first. Write them to `.entropy/sketch.txt` with a heredoc, labeled layer one, two, three.
-
-Under `--seed` with a seed found in the log, restore instead of writing:
-
-```bash
-mkdir -p .entropy && grep -F "\"seed\":\"$SEED\"" .entropy/seeds.jsonl | head -1 | jq -j .sketch > .entropy/sketch.txt
-grep -F "\"seed\":\"$SEED\"" .entropy/seeds.jsonl | head -1 | jq -j .menus > .entropy/menus.txt
-```
-
-### 4. Menus, then the hash
-
-The decisions in the sketch are the axes. Drop any the brief fixes before rolling, and say so. If a pick clashes with the brief anyway, drop that axis; never rewrite the pick to fit. For each remaining axis write a menu of 8 to 12 options, numbered from 0. Options 0, 1, and 2 are what the three layers show on that axis, in the sketch's own words, one slot each. The rest must be far apart: a reader could tell from the result alone which was picked, and two shades of one idea are one option. Include the opposite of the default, options from other eras and traditions, and at least two you would never choose. Every option must be one that can be done well. An option is a treatment, not a label: the pick governs every instance of what the axis is about, the footer and the caption and the button included. Write every option and every axis name in plain words a reader could check against the result, the way a copywriter or a designer would say it out loud: not "repetition/parallelism" but "the same phrase opens every line"; not "diction" but "the kind of words". No slashes, no arrows, no terms of art.
-
-Write the menus to `.entropy/menus.txt` with a heredoc, one axis per line, exactly as shown to the user. Then hash the seed and the menus together, once:
-
-```bash
-{ printf '%s' "$SEED"; cat .entropy/menus.txt; } | shasum -a 256 | cut -c1-40 | fold -w2 | while read h; do echo $((16#$h)); done
-```
-
-Twenty numbers from 0 to 255. Axis 1 takes the first, axis 2 the second, and so on. The pick is the number modulo the menu size. Show the arithmetic for every axis: `axis 3: 203 mod 9 = 5, option 5`. Never hash the seed alone, and never edit a menu after the numbers exist; the menus are in the hash, so an edit re-rolls every axis. Do not adjust a pick after seeing it. If picks clash, make the clash work.
-
-When the user asks for several variations, roll once. The variations differ on one axis, one option each in menu order from the pick; everything else holds.
-
-### 5. Show
-
-Lead with two short paragraphs in plain words, the way you would tell a colleague across a desk.
-
-**Held constant.** What the result will keep no matter what the dice said: every line of the brief, every axis dropped because the brief fixed it, and anything the task itself settles. Plain sentences: "Under eight words, with a verb. No coaching, guidance, or training. The voice is a peer who has been through it. Five versions."
-
-**Will vary.** What the dice chose, as one sentence per axis describing the result, not the axis: "The same phrase opens every line. Each headline is one long sentence. The words are the kind people use at a kitchen table, with the real names of the money things." For several variations, say which one thing changes between them.
-
-Under those, for the record: the seed, the scope, and one line per axis with the option, its index, and the arithmetic. Then the menus in full, every option of every axis, so a bad option can be caught before it is built. Do not put the seed into the deliverable.
-
-Then, unless `--headless` was given, stop and wait. Say: go, re-roll, or drop an axis.
-
-### 6. Record, under `--log` only
-
-Without `--log`, skip this step. The menus and sketch files stay on disk as working files and nothing else is written.
+Six numbers from the seed, six lines from the dictionary:
 
 ```bash
 mkdir -p .entropy
-jq -nc --arg ts "$TS" --arg seed "$SEED" --arg task "$TASK" --arg scope "$SCOPE" --arg brief "$BRIEF" --arg dir "$DIRECTION" --arg from "$FROM" --rawfile menus .entropy/menus.txt --rawfile sketch .entropy/sketch.txt '{ts:$ts, seed:$seed, task:$task, scope:$scope, brief:$brief, direction:$dir, menus:$menus, sketch:$sketch, from:$from}' >> .entropy/seeds.jsonl
+[ -s .entropy/words.txt ] || grep -x '[a-z]\{4,9\}' /usr/share/dict/words > .entropy/words.txt
+N=$(wc -l < .entropy/words.txt | tr -d ' ')
+printf '%s' "$SEED" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do sed -n "$((16#$h % N + 1))p" .entropy/words.txt; done
 ```
 
-`$FROM` is the `ts` of the line replayed, or empty. Write `.entropy/current.json` with the same object. If the directory is a git repository and `.entropy/` is not ignored, ask whether to add it to `.gitignore`; under `--headless`, do not ask and do not change it.
+The first five words are starting points. The sixth is the tiebreaker: its line number modulo 5 names which strategy the dice chose, 0 for the first. If the dictionary file is missing, say so and stop; do not invent words.
+
+### 4. Strategies
+
+For each of the five words, write a chain of three hops, one line each: the word, what it brings to mind, what that brings to mind, what that brings to mind. Then, from the third hop only, a strategy for the task: three or four plain sentences saying what the result would be, the way you would tell a colleague across a desk. The strategy obeys every brief line. It does not obey your taste. If the third hop is a bad fit for the task, the strategy is still built from it; a bad fit made to work is the point. If you do not know the word, the first hop is what it looks or sounds like.
+
+Write all five to `.entropy/strategies.txt` with a heredoc, numbered 1 to 5, each with its word and chain.
+
+Read the five back before showing them. If two would give results a reader could not tell apart, the later one is rewritten from its own third hop until they differ.
+
+### 5. Show
+
+**Held constant.** Every brief line, in plain sentences.
+
+**Five ways in.** Each strategy under its number, word, and chain. Then one line: which the dice chose.
+
+Then, unless `--headless` was given, stop and wait. Say: a number, go, or re-roll.
+
+### 6. Record, under `--log` only
+
+```bash
+jq -nc --arg ts "$TS" --arg seed "$SEED" --arg task "$TASK" --arg brief "$BRIEF" --arg pick "$PICK" --rawfile strategies .entropy/strategies.txt '{ts:$ts, seed:$seed, task:$task, brief:$brief, pick:$pick, strategies:$strategies}' >> .entropy/seeds.jsonl
+```
+
+`$PICK` is the number taken. Write `.entropy/current.json` with the same object.
 
 ### 7. Do the task and read it back
 
-When the user says go, or under `--headless` in the same reply, do the task. If no task was given, stop and say the direction is set.
+Build the chosen strategy. Before presenting the result, check it in this order:
 
-Before presenting the result, check it in this order:
-
-1. The brief. Run each test. A result that fails a brief line is wrong however well it honors the seed.
-2. The picks. State one fact per axis, read from the least prominent instance of what the axis governs, since that is where the habit goes: register from the second body paragraph and the footer, not the headline; small type from a folio or caption; surface from the button and the smallest panel; the ground from a corner pixel. A fact that reads as a different option than the one picked is a miss.
-3. The sketch. Take the ten most specific words from each layer in `.entropy/sketch.txt` and search the result with `grep -ci`. A hit on an axis whose pick was not the slot that layer fed is a miss, whatever the pick is called.
+1. The brief. Run each test. A result that fails a brief line is wrong however well it follows the strategy.
+2. The strategy. State one fact from the least prominent place in the result, the second paragraph, the footer, the button, the smallest label, and say which sentence of the strategy it shows. A fact that shows a different strategy, or the plain default, is a miss.
+3. The other four. Search the result for the most specific words of the strategies not taken. A hit is a miss.
 
 Rewrite until there are no misses. Do not mention the check in the output.
 
-For visual work, render before reading: headless Chrome, `"$CHROME" --headless --disable-gpu --hide-scrollbars --window-size=1280,800 --screenshot=shot.png "file://$PWD/page.html"`, or `npx playwright screenshot --viewport-size=1280,800 "file://$PWD/page.html" shot.png`, and look at the image with the Read tool. `magick shot.png -format '%[pixel:p{0,0}]' info:` gives the corner pixel. With no renderer, say so in one line and read the code. Delete `page.html` and `shot.png` afterward unless the deliverable is the file.
+For visual work, render before reading: `"$CHROME" --headless --disable-gpu --hide-scrollbars --window-size=1280,800 --screenshot=shot.png "file://$PWD/page.html"`, or `npx playwright screenshot --viewport-size=1280,800 "file://$PWD/page.html" shot.png`, and look at the image with the Read tool. With no renderer, say so in one line and read the code. Delete `page.html` and `shot.png` afterward unless the deliverable is the file.
 
 ## Rules
 
-- One seed at a time. A new inject replaces the old direction. The log keeps history.
-- The scope is the deliverable named in the task. Work inside it inherits the direction; work outside it does not. When unclear, ask; under `--headless`, say you are applying it and let the user object.
-- The user's standing rules and the brief win. The direction varies taste inside that box and never overrides it.
-- To replay a run made under `--log`, run `/entropy:inject --seed <string>` in the same directory, where the log holds the sketch and menus. A seed alone does not reproduce a direction. To replay elsewhere, copy the whole log line first.
-- When delegating inside the scope, paste the seed, brief, and direction from the reply into the subagent's prompt.
-- Never soften the direction later without saying so. If the user asks for a change, apply it and keep the rest.
+- One seed at a time. A new inject replaces the old strategy.
+- The scope is the deliverable named in the task. Work inside it follows the strategy; work outside it does not. When unclear, ask; under `--headless`, say you are applying it and let the user object.
+- The user's standing rules and the brief win. The strategy varies taste inside that box and never overrides it.
+- When the user asks for several variations, build the chosen strategy several ways, or build several strategies, as they say. Do not roll new words for each.
+- When delegating inside the scope, paste the brief and the chosen strategy from the reply into the subagent's prompt.
+- Never soften the strategy later without saying so. If the user asks for a change, apply it and keep the rest.
