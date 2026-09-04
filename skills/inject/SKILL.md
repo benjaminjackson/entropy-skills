@@ -17,10 +17,10 @@ This is a tool for widening the field: a first draft, a whole page, several dist
 `$ARGUMENTS` is one of:
 
 - Empty: new seed, direction shown, then stop and wait.
-- `<task>`: new seed, direction shown, then do the task.
+- `<task>`: new seed, direction shown, then stop and wait for the user before doing the task. The user says go, asks for a re-roll, which is a new seed, or drops an axis, and the rest holds. Any change the user asks for is applied and the rest kept.
 - `--seed <string> [task]`: use the given string. If a line in `.entropy/seeds.jsonl` has this exact seed, put its recorded sketch and menus back on disk and skip to the hash, so the picks come out the same. If not, proceed as for a new seed and say the result will not match any earlier run.
 - `--current`: do not generate. Read `.entropy/current.json` and re-state its seed, brief, and direction so the rest of the conversation follows them. If the file is missing, say so and stop.
-- `--headless`: combine with any of the above. Never ask questions; decide and state the decision. Stays on for the session.
+- `--headless`: combine with any of the above. Do not stop after the direction; do the task in the same reply. Never ask questions; decide and state the decision. Stays on for the session.
 
 Flags come first. Text after the flags is the task.
 
@@ -65,7 +65,7 @@ When the user asks for several variations, roll once. The variations differ on o
 
 ### 5. Show
 
-Print the seed, the brief, and the direction: one line per axis with the option, its index, and the arithmetic, then one line stating the scope, the deliverable the task named. Do not put the seed into the deliverable.
+Print the seed, the brief, the menus, and the direction: one line per axis with the option, its index, and the arithmetic, then one line stating the scope, the deliverable the task named. Do not put the seed into the deliverable. Then, unless `--headless` was given, stop and wait. Say: go, re-roll, or drop an axis. The menus are shown so a bad option can be caught before it is built.
 
 ### 6. Record
 
@@ -78,7 +78,7 @@ jq -nc --arg ts "$TS" --arg seed "$SEED" --arg task "$TASK" --arg scope "$SCOPE"
 
 ### 7. Do the task and read it back
 
-If a task was given, do it now, in this same reply. If not, stop and say the direction is set.
+When the user says go, or under `--headless` in the same reply, do the task. If no task was given, stop and say the direction is set.
 
 Before presenting the result, check it in this order:
 
