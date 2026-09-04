@@ -51,7 +51,7 @@ grep -F "\"seed\":\"$SEED\"" .entropy/seeds.jsonl | head -1 | jq -j .menus > .en
 
 ### 4. Menus, then the hash
 
-The decisions in the sketch are the axes. Drop any the brief fixes and say so. For each remaining axis write a menu of 8 to 12 options, numbered from 0. Options 0, 1, and 2 are what the three layers show on that axis, in the sketch's own words, one slot each. The rest must be far apart: a reader could tell from the result alone which was picked, and two shades of one idea are one option. Include the opposite of the default, options from other eras and traditions, and at least two you would never choose. Every option must be one that can be done well. An option is a treatment, not a label: the pick governs every instance of what the axis is about, the footer and the caption and the button included.
+The decisions in the sketch are the axes. Drop any the brief fixes before rolling, and say so. If a pick clashes with the brief anyway, drop that axis; never rewrite the pick to fit. For each remaining axis write a menu of 8 to 12 options, numbered from 0. Options 0, 1, and 2 are what the three layers show on that axis, in the sketch's own words, one slot each. The rest must be far apart: a reader could tell from the result alone which was picked, and two shades of one idea are one option. Include the opposite of the default, options from other eras and traditions, and at least two you would never choose. Every option must be one that can be done well. An option is a treatment, not a label: the pick governs every instance of what the axis is about, the footer and the caption and the button included. Write every option and every axis name in plain words a reader could check against the result, the way a copywriter or a designer would say it out loud: not "repetition/parallelism" but "the same phrase opens every line"; not "diction" but "the kind of words". No slashes, no arrows, no terms of art.
 
 Write the menus to `.entropy/menus.txt` with a heredoc, one axis per line, exactly as shown to the user. Then hash the seed and the menus together, once:
 
@@ -65,7 +65,7 @@ When the user asks for several variations, roll once. The variations differ on o
 
 ### 5. Show
 
-Print the seed, the brief, the menus, and the direction: one line per axis with the option, its index, and the arithmetic, then one line stating the scope, the deliverable the task named. Do not put the seed into the deliverable. Then, unless `--headless` was given, stop and wait. Say: go, re-roll, or drop an axis. The menus are shown so a bad option can be caught before it is built.
+Print the seed, the brief, the menus in full, every option of every axis, not the file name, and the direction: one line per axis with the option, its index, and the arithmetic, then one line stating the scope, the deliverable the task named. Do not put the seed into the deliverable. Then, unless `--headless` was given, stop and wait. Say: go, re-roll, or drop an axis. The menus are shown so a bad option can be caught before it is built.
 
 ### 6. Record
 
