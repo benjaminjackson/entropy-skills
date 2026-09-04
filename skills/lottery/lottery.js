@@ -15,7 +15,7 @@ const STRATEGY = {
 const JUDGE = {
   type: 'object',
   properties: {
-    shared: { type: 'array', items: { type: 'object', properties: { habit: { type: 'string' }, test: { type: 'string' }, members: { type: 'array', items: { type: 'integer' } } }, required: ['habit', 'test', 'members'] } },
+    shared: { type: 'array', items: { type: 'object', properties: { habit: { type: 'string' }, ban: { type: 'string' }, test: { type: 'string' }, members: { type: 'array', items: { type: 'integer' } } }, required: ['habit', 'ban', 'test', 'members'] } },
     strategies: { type: 'array', items: { type: 'object', properties: { id: { type: 'integer' }, distance: { type: 'integer' }, brief: { type: 'string', enum: ['pass', 'fail'] }, why: { type: 'string' } }, required: ['id', 'distance', 'brief', 'why'] } },
   },
   required: ['shared', 'strategies'],
@@ -25,7 +25,8 @@ const BUILT = { type: 'object', properties: { file: { type: 'string' }, note: { 
 function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0 } return h }
 function shuffle(arr, key) { const a = arr.slice(); let h = hash(key); for (let i = a.length - 1; i > 0; i--) { h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; const j = h % (i + 1); [a[i], a[j]] = [a[j], a[i]] } return a }
 const pad = id => String(id).padStart(2, '0')
-const briefLines = () => [brief, ...bans.map(b => `Do not: ${b.habit}. Test: ${b.test}`)].filter(Boolean).join('\n')
+const BANS_PER_ROUND = 3 // ponytail: fixed cap; make it a flag if a task ever needs more
+const briefLines = () => [brief, ...bans.map(b => `${b.ban} Test: ${b.test}`)].filter(Boolean).join('\n')
 
 if (args.mode === 'build') {
   const built = await parallel(args.survivors.map(s => () => agent(
@@ -53,29 +54,29 @@ for (let r = 1; r <= roundCount; r++) {
 
   const order = shuffle(strategies, `${seed}${r}`)
   const judge = await agent(
-    `You are judging ${order.length} independent strategies written for the same brief, to find what they share.\n\nBrief:\n${task}\n${fixed}\n\nRead each file below with the Read tool. Judge only the strategy sentences; ignore the chain line, any held-constant lines, and any seed line.\n${order.map(s => `id ${s.id}: ${s.file}`).join('\n')}\n\nDo two things. First, name every feature three or more strategies share: a device, a structure, a material, a palette, a register, a conceit, an opening move. Say each in plain words a reader could check, give a test a grep or a reader could run on a finished result, and list the ids that share it. Second, for every id, score distance 1 to 10 (1 = sits in the middle of the crowd, 10 = nothing else here is like it), say pass or fail on the brief, and give one sentence why. Never say which strategy is best; that is not your job.\n\nWrite the JSON to ${dir}/round-${r}/judge.json and return the same object.`,
+    `You are judging ${order.length} independent strategies written for the same brief, to find what they share.\n\nBrief:\n${task}\n${fixed}\n\nRead each file below with the Read tool. Judge only the strategy sentences; ignore the chain line, any held-constant lines, and any seed line.\n${order.map(s => `id ${s.id}: ${s.file}`).join('\n')}\n\nDo two things. First, name every feature three or more of the finished results would share if these strategies were built: a device, a structure, a material, a palette, a register, a conceit, an opening move, a stance. Judge what the result would be, never the wording or grammar of the strategy text itself. For each: habit, a plain description a reader could check; ban, one sentence in the negative imperative that forbids the habit itself and names no substitute (Do not let the house be the subject of the main clause; never Give the man the only active verb), because a substitute becomes the next round's habit; test, what a finished result must show or must not show, runnable by a reader or a grep on the result; members, the ids that share it. Second, for every id, score distance 1 to 10 (1 = sits in the middle of the crowd, 10 = nothing else here is like it), say pass or fail on the brief, and give one sentence why. Never say which strategy is best; that is not your job.\n\nWrite the JSON to ${dir}/round-${r}/judge.json and return the same object.`,
     { label: `judge round ${r}`, phase: 'Judge', model: judgeModel, effort: 'high', schema: JUDGE, agentType: 'general-purpose' },
   )
   rounds.push({ r, strategies, judge })
   if (!judge) { log(`round ${r}: no judge verdict`); break }
-  const found = judge.shared.filter(h => h.members.length >= 3)
-  log(`round ${r}: ${found.length} shared habits named`)
-  for (const h of found) if (!bans.some(b => b.habit === h.habit)) bans.push({ habit: h.habit, test: h.test, round: r, members: h.members })
+  const found = judge.shared.filter(h => h.members.length >= 3).sort((a, b) => b.members.length - a.members.length)
+  const fresh = found.filter(h => !bans.some(b => b.habit === h.habit)).slice(0, BANS_PER_ROUND)
+  log(`round ${r}: ${found.length} shared habits named, banning ${fresh.length}`)
+  for (const h of fresh) bans.push({ habit: h.habit, ban: h.ban, test: h.test, round: r, members: h.members })
 }
 
 const pool = []
-let failed = 0, habitual = 0
+let failed = 0
 for (const { strategies, judge } of rounds) {
   if (!judge) continue
-  const inHabit = new Set(judge.shared.filter(h => h.members.length >= 3).flatMap(h => h.members))
+  const habits = judge.shared.filter(h => h.members.length >= 3)
   for (const v of judge.strategies) {
     const s = strategies.find(x => x.id === v.id); if (!s) continue
     if (v.brief === 'fail') { failed++; continue }
-    if (inHabit.has(v.id)) { habitual++; continue }
-    pool.push({ ...s, distance: v.distance, why: v.why })
+    pool.push({ ...s, distance: v.distance, habits: habits.filter(h => h.members.includes(v.id)).length, why: v.why })
   }
 }
-pool.sort((a, b) => b.distance - a.distance || a.id - b.id)
+pool.sort((a, b) => b.distance - a.distance || a.habits - b.habits || a.id - b.id)
 const survivors = pool.slice(0, keep)
-log(`dropped ${failed} for the brief and ${habitual} for a shared habit; ${pool.length} left, keeping ${survivors.length}`)
-return { rounds: rounds.map(({ r, strategies, judge }) => ({ r, n: strategies.length, judge })), bans, survivors, dropped: { brief: failed, habit: habitual } }
+log(`dropped ${failed} for the brief; ${pool.length} left, keeping ${survivors.length}`)
+return { rounds: rounds.map(({ r, strategies, judge }) => ({ r, n: strategies.length, judge })), bans, survivors, dropped: { brief: failed } }

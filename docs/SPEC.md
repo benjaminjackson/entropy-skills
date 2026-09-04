@@ -31,9 +31,9 @@ The plugin must work for any task where variety beats the default: visual design
 
 1. Every strategy comes from its own context, one agent per word, each running `/entropy:inject --headless --strategy --word <word>`. Several strategies in one call are never a round; a model that sees the others avoids repeating them and the habit hides.
 2. The strategies come from the model that will build. The habits found are that model's habits. The default is opus for strategies, judge, and builds.
-3. One judge per round reads the round's strategies in shuffled order and returns, by schema, every feature three or more share, each with a test a reader or a grep could run, and a distance score and a brief pass or fail for every strategy. It never says which is best.
-4. Every named habit becomes a brief line, `Do not: <habit>`, with the judge's test, for the next round. Bans come from data, not from the skill author.
-5. Filtering and ranking are plain code: brief failures out, habit members out, sort by distance, keep K. No model touches the ranking.
+3. One judge per round reads the round's strategies in shuffled order and returns, by schema, every feature three or more of the finished results would share, each with a ban written as a negative imperative that names no substitute and a test that runs on the result, and a distance score and a brief pass or fail for every strategy. It judges the result the strategy would make, never the strategy's prose. It never says which is best.
+4. The three most shared habits become brief lines, the judge's ban and test, for the next round. More bans than that and the next round writes a checklist instead of a strategy; a described habit passed as `Do not: <description>` reads as an instruction to do it. Bans come from data, not from the skill author.
+5. Filtering and ranking are plain code: brief failures out, sort by distance, fewer shared habits as the tiebreak, keep K. Habit members are not dropped; with N draws and a threshold of three, every strategy shares something. No model touches the ranking.
 6. The human picks from strategies. Builds happen after the pick, or before it only under `--build`.
 7. Every file is written once, by the agent that made it: `round-<r>/<NN>.md` by the strategy agent, `round-<r>/judge.json` by the judge, under `.entropy/lottery/<ts>/`. The lottery always writes; the files are the deliverable.
 8. One line per named habit is appended to `.entropy/habits.jsonl`, never rewritten. This is the atlas of what the model reaches for, task by task.
@@ -64,6 +64,8 @@ The plugin must work for any task where variety beats the default: visual design
 **Strategies, not pages.** A strategy is about a hundred tokens and a page about twenty thousand. Twenty-four Opus strategies cost less than two pages, so the lottery can afford many draws, and what recurs in strategies is what would recur in pages: the design regression showed the shared ground, eyebrow, and copy conceit were all decided at the strategy level.
 
 **Recurrence names the habit; the author does not.** Each territory pick, costume and skeleton, bought back one point on the design prompt and left the next habit standing. A ban moves a habit only once it is named, and the list of habits differs per task. A judge names shared features reliably, nine of ten blind in the test session, and is unreliable at best. So the judge names and the human picks.
+
+**A ban forbids and never substitutes.** In the first six-word run, round one's bans were positive instructions: give the man the active verb, put in a spoken line or the first person, put in a loud outburst. Round two obeyed all three and converged again: six of six first person, five of six scraping the paint off, four of six with the house key as the tool. A substitute is a pick, and a pick is the next habit. The ban names the habit and stops.
 
 **Same model for strategies and builds.** Cheaper strategy agents would give the cheaper model's atlas. There is nothing to save at a hundred tokens each.
 

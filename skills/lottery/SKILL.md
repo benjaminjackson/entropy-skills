@@ -39,7 +39,7 @@ Call the Workflow tool with `scriptPath` set to `lottery.js` in this skill's dir
 {"task": "<task>", "brief": "<brief lines>", "words": ["<from words.txt>"], "n": N, "keep": K, "ts": "<TS>", "seed": "<SEED>", "dir": "<DIR>", "model": "<model>", "judgeModel": "<judge model>", "bans": []}
 ```
 
-The script runs one agent per word, each a fresh context running `/entropy:inject --headless --strategy --word <word>`, and each writes its own reply to `round-<r>/<NN>.md` under the run directory. One judge per round reads those files, names every feature three or more strategies share with a test for each, scores each strategy's distance from the crowd, marks brief failures, and writes `round-<r>/judge.json`. Every named habit becomes a brief line for the next round. At the end the script drops brief failures and habit members, sorts by distance, and returns the top K with the bans and each round's verdict. Nothing is copied; the files the agents wrote are the record.
+The script runs one agent per word, each a fresh context running `/entropy:inject --headless --strategy --word <word>`, and each writes its own reply to `round-<r>/<NN>.md` under the run directory. One judge per round reads those files, names every feature three or more of the finished results would share, gives each a ban a writer can obey and a test that runs on the result, scores each strategy's distance from the crowd, marks brief failures, and writes `round-<r>/judge.json`. The three most shared habits become brief lines for the next round; more than that and the next round's strategies turn into a walk through the list. At the end the script drops brief failures, sorts by distance with fewer shared habits as the tiebreak, and returns the top K with the bans and each round's verdict. Nothing is copied; the files the agents wrote are the record.
 
 ### 4. Log the habits
 
@@ -71,5 +71,5 @@ A number: build that strategy here, the way inject step 7 does, with the brief a
 
 - Every strategy comes from its own context. Never write several in one call; a model that can see the others avoids repeating them, and the habit hides.
 - The judge names what is shared and scores distance. It never says which is best. If the user wants best, that is their call to make from the survivors.
-- A ban is a brief line with a test, nothing more. It is not rewritten into taste.
+- A ban is one negative imperative the judge wrote, with a test on the result, nothing more. It forbids the habit and names no substitute; in the first run, a ban that said what to do instead put all six next-round strategies in the first person with a house key in hand. Three per round at most.
 - The inject rules hold inside every agent: the user's standing rules and the brief win, the chain words stay out of the result, nothing is softened without saying so.
