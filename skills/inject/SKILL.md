@@ -45,11 +45,12 @@ List what the user has already fixed, one line each, in their words: a length, a
 Six words from the seed, one line:
 
 ```bash
-W=$(grep -Ex '[a-z]{4,9}' /usr/share/dict/words); C=$(printf '%s\n' "$W" | wc -l | tr -d ' ')
+for d in /usr/share/dict/words /usr/share/dict/american-english .entropy/words.txt; do [ -s "$d" ] && DICT=$d && break; done
+W=$(grep -Ex '[a-z]{4,9}' "$DICT"); C=$(printf '%s\n' "$W" | wc -l | tr -d ' ')
 printf '%s' "$SEED" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do i=$((16#$h % C + 1)); echo "$i $(printf '%s\n' "$W" | sed -n "${i}p")"; done
 ```
 
-Each line is a position and a word, drawn from the lowercase words of four to nine letters. No dollar sign followed by a digit anywhere in the command: the skill runner replaces those with words from the arguments. Use the first word. For N variations, use the first N. When the user says more, take the next unused word; past the sixth, draw six more from the seed with a round number appended, `printf '%s2' "$SEED"`, then `3`. Nothing already shown is discarded. If the dictionary file is missing, say so and stop; do not invent words. Under `--word`, skip the seed and the draw and use the given word.
+Each line is a position and a word, drawn from the lowercase words of four to nine letters. No dollar sign followed by a digit anywhere in the command: the skill runner replaces those with words from the arguments. Use the first word. For N variations, use the first N. When the user says more, take the next unused word; past the sixth, draw six more from the seed with a round number appended, `printf '%s2' "$SEED"`, then `3`. Nothing already shown is discarded. If the loop finds no file, get one the way **Dictionary** below says, then draw. Under `--word`, skip the seed and the draw and use the given word.
 
 ### 4. Strategy
 
@@ -90,6 +91,32 @@ Build the strategy, or one result per strategy for variations. Before presenting
 Rewrite until there are no misses. Do not mention the check in the output.
 
 For visual work, render before reading: `"$CHROME" --headless --disable-gpu --hide-scrollbars --window-size=1280,800 --screenshot=shot.png "file://$PWD/page.html"`, or `npx playwright screenshot --viewport-size=1280,800 "file://$PWD/page.html" shot.png`, and look at the image with the Read tool. With no renderer, say so in one line and read the code. Leave the files where they are; a page the user asked for is theirs to keep, and the screenshot is one file.
+
+## Dictionary
+
+The draw needs a word list at one of the paths in step 3. macOS ships `/usr/share/dict/words`. Most Linux images, including the container this skill usually runs in, do not.
+
+**In a Claude Code cloud session**, `CLAUDE_CODE_REMOTE` is `true`. The container is root, ephemeral, and thrown away when the session ends, so install without asking:
+
+```bash
+apt-get install -y wamerican
+```
+
+No `apt-get update` first; the package is already in the image's index. Do it once per session, because the next session starts from a fresh container.
+
+**On a machine the user owns**, `CLAUDE_CODE_REMOTE` is unset. Installing a package there is the user's call, so name the one line and wait: `sudo apt-get install wamerican` on Debian and Ubuntu, `words` on Fedora and Arch.
+
+**With no package manager, no root, or a user who said no**, fetch a list into `.entropy/words.txt`, which step 3 finds on every later run:
+
+```bash
+mkdir -p .entropy && curl -fsSL https://raw.githubusercontent.com/dolph/dictionary/master/popular.txt | tr -d '\r' > .entropy/words.txt
+```
+
+Twenty-five thousand common words. Strip the carriage returns or the pattern in step 3 matches nothing. A larger list such as `words_alpha.txt` also works and draws words like "undreggy" and "otiatrics", which is a worse starting point than a word the model knows.
+
+The list is part of the draw. The same seed against a different list gives different words, so `--seed` replays only on the machine and list it was drawn from, and a run worth replaying says which one it used.
+
+If none of the three can be had, say so and stop. Do not invent words, and do not substitute a word you thought of: a word the model chose is the default wearing a costume, and the drawn word is the only part of this skill that is not the model.
 
 ## Rules
 

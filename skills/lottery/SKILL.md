@@ -26,11 +26,12 @@ Exactly as in `/entropy:inject` step 2: what the user has already fixed, one lin
 
 ```bash
 SEED=$(openssl rand -base64 48); TS=$(date -u +%Y%m%dT%H%M%SZ); DIR=.entropy/lottery/$TS; mkdir -p "$DIR"
-W=$(grep -Ex '[a-z]{4,9}' /usr/share/dict/words); C=$(printf '%s\n' "$W" | wc -l | tr -d ' ')
+for d in /usr/share/dict/words /usr/share/dict/american-english .entropy/words.txt; do [ -s "$d" ] && DICT=$d && break; done
+W=$(grep -Ex '[a-z]{4,9}' "$DICT"); C=$(printf '%s\n' "$W" | wc -l | tr -d ' ')
 for k in $(seq 1 $(( (N*R)/6 + 2 ))); do s=$SEED; [ "$k" -gt 1 ] && s=$SEED$k; printf '%s' "$s" | shasum -a 256 | cut -c1-48 | fold -w8 | while read h; do printf '%s\n' "$W" | sed -n "$((16#$h % C + 1))p"; done; done | perl -ne 'print unless $seen{$_}++' | head -n $((N*R)) > "$DIR/words.txt"
 ```
 
-The same draw as inject, repeated with round numbers appended to the seed, duplicates dropped. No dollar sign followed by a digit anywhere in the command: the skill runner replaces those with words from the arguments. If the dictionary file is missing, say so and stop.
+The same draw as inject, repeated with round numbers appended to the seed, duplicates dropped. No dollar sign followed by a digit anywhere in the command: the skill runner replaces those with words from the arguments. If the loop finds no word list, get one the way the **Dictionary** section of `/entropy:inject` says: in a Claude Code cloud session, where `CLAUDE_CODE_REMOTE` is `true`, `apt-get install -y wamerican` without asking; on the user's machine, name the line and wait; with no package manager, fetch a list into `.entropy/words.txt`. If none can be had, say so and stop.
 
 ### 3. Run
 
