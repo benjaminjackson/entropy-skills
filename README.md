@@ -15,7 +15,7 @@ The technique is String Seed of Thought, from [Sakana AI](https://sakana.ai/): r
 /plugin install entropy@entropy-skills
 ```
 
-Needs `/usr/share/dict/words`. macOS has it. On Debian and Ubuntu it is the `wamerican` package.
+Needs a word list. macOS ships `/usr/share/dict/words`. On Debian and Ubuntu it is the `wamerican` package, on Fedora and Arch it is `words`. In a Claude Code cloud session the container has none, and the skill installs `wamerican` itself: the container is ephemeral, so that happens once per session. With no package manager it falls back to downloading a list to `.entropy/words.txt`. It never makes a word up; a word the model chose is not a random word.
 
 ## Use
 
